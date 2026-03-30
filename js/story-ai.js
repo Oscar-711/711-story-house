@@ -1,3 +1,4 @@
+// StoryAI v1.1 - Fixed JSON parsing
 // API 配置：部署后改为 Workers 地址
 const API_CONFIG = {
   // 部署后改为: 'https://your-worker.workers.dev/api/story'
@@ -232,9 +233,14 @@ ${this.safetyGuidelines}
     // 4. 修复未转义的换行符（在字符串内）
     jsonStr = jsonStr.replace(/("[^"]*?)\n([^"]*?")/g, '$1\\n$2');
     // 5. 修复未加引号的属性名（如 {title: "..."} → {"title": "..."}）
+    // 匹配 {key: 或 ,key: 的情况
     jsonStr = jsonStr.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)(\s*:)/g, '$1"$2"$3');
-    // 6. 修复单引号（替换为双引号）
-    jsonStr = jsonStr.replace(/'/g, '"');
+    // 6. 修复单引号（替换为双引号）- 但要小心不要替换字符串内的单引号
+    // 先处理键名和值周围的单引号
+    jsonStr = jsonStr.replace(/'([^']*?)':/g, '"$1":');
+    jsonStr = jsonStr.replace(/:\s*'([^']*?)'/g, ': "$1"');
+    // 7. 再次清理尾部逗号（修复后可能产生新的）
+    jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
 
     let story;
     try {
