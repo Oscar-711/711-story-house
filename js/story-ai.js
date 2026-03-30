@@ -173,11 +173,14 @@ ${this.safetyGuidelines}
 
     if (!res.ok) {
       const err = await res.text();
-      throw new Error(`API请求失败: ${res.status} ${err}`);
+      console.error('API Error:', res.status, err);
+      throw new Error(`API请求失败: ${res.status} - ${err.substring(0, 200)}`);
     }
 
     const data = await res.json();
+    console.log('API Response:', data);
     const content = data.choices?.[0]?.message?.content || '';
+    console.log('Generated content:', content.substring(0, 500));
     return this.parseStoryJSON(content, childName);
   },
 
