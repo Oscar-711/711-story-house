@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>宝贝档案 - 711故事屋</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>👶 宝贝档案</h1>
+    </div>
+
+    <div id="childList"></div>
+
+    <button class="btn btn-block" onclick="openForm()" style="margin-bottom:20px">➕ 添加宝贝</button>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-content">
+      <h2 style="margin-bottom:16px" id="formTitle">添加宝贝</h2>
+      <input type="hidden" id="editId">
+      <div class="form-group">
+        <label>乳名</label>
+        <input type="text" id="fname" placeholder="宝贝的小名">
+      </div>
+      <div class="form-group">
+        <label>性别</label>
+        <div class="gender-select">
+          <div class="gender-option" data-v="boy" onclick="selGender('boy')">👦 男孩</div>
+          <div class="gender-option" data-v="girl" onclick="selGender('girl')">👧 女孩</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>年龄</label>
+        <select id="fage">
+          <option value="">请选择</option>
+          <option value="2">2岁</option><option value="3">3岁</option>
+          <option value="4">4岁</option><option value="5">5岁</option>
+          <option value="6">6岁</option><option value="7">7岁</option>
+          <option value="8">8岁</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>喜好标签</label>
+        <div class="tags-grid" id="tagsGrid"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn" onclick="saveChild()">💾 保存</button>
+        <button class="btn btn-danger" id="delBtn" onclick="deleteChild()" style="display:none">🗑️ 删除</button>
+        <button class="btn" style="background:#aaa" onclick="closeForm()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="nav-bar">
+    <a href="index.html"><span class="icon">🏠</span>首页</a>
+    <a href="library.html"><span class="icon">📚</span>故事库</a>
+    <a href="create.html"><span class="icon">✨</span>AI创作</a>
+    <a href="profile.html"><span class="icon">👤</span>我的</a>
+  </nav>
+
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const ALL_TAGS = ['恐龙','公主','太空','动物','海洋','魔法','汽车','童话','机器人','花草'];
+    let selTags = [], curGender = '';
+
+    function render() {
+      const list = ChildStore.getAll();
+      const el = document.getElementById('childList');
+      if (!list.length) { el.innerHTML = '<div class="card" style="text-align:center;color:var(--text-secondary)">还没有添加宝贝哦～</div>'; return; }
+      el.innerHTML = list.map(c => `
+        <div class="card child-list-card" onclick="openForm('${c.id}')">
+          <div class="avatar">${getGenderEmoji(c.gender)}</div>
+          <div class="meta">
+            <h3>${c.name}</h3>
+            <p>${c.age}岁 · ${c.gender==='girl'?'女孩':'男孩'}</p>
+            <div>${(c.tags||[]).map(t=>'<span class="tag">'+t+'</span>').join('')}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function initTags() {
+      document.getElementById('tagsGrid').innerHTML = ALL_TAGS.map(t =>
+        `<div class="tag-option" data-t="${t}" onclick="toggleTag('${t}')">${t}</div>`
+      ).join('');
+    }
+
+    function toggleTag(t) {
+      const i = selTags.indexOf(t);
+      if (i>=0) selTags.splice(i,1); else selTags.push(t);
+      document.querySelectorAll('.tag-option').forEach(el => {
+        el.classList.toggle('selected', selTags.includes(el.dataset.t));
+      });
+    }
+
+    function selGender(g) {
+      curGender = g;
+      document.querySelectorAll('.gender-option').forEach(el => {
+        el.classList.toggle('selected', el.dataset.v === g);
+      });
+    }
+
+    function openForm(id) {
+      initTags();
+      if (id) {
+        const c = ChildStore.get(id);
+        document.getElementById('editId').value = id;
+        document.getElementById('fname').value = c.name;
+        document.getElementById('fage').value = c.age;
+        selGender(c.gender);
+        selTags = [...(c.tags||[])];
+        document.querySelectorAll('.tag-option').forEach(el => {
+          el.classList.toggle('selected', selTags.includes(el.dataset.t));
+        });
+        document.getElementById('formTitle').textContent = '编辑宝贝';
+        document.getElementById('delBtn').style.display = 'block';
+      } else {
+        document.getElementById('editId').value = '';
+        document.getElementById('fname').value = '';
+        document.getElementById('fage').value = '';
+        curGender = ''; selTags = [];
+        document.getElementById('formTitle').textContent = '添加宝贝';
+        document.getElementById('delBtn').style.display = 'none';
+      }
+      document.getElementById('modal').classList.add('show');
+    }
+
+    function closeForm() { document.getElementById('modal').classList.remove('show'); }
+
+    function saveChild() {
+      const name = document.getElementById('fname').value.trim();
+      const age = document.getElementById('fage').value;
+      if (!name) { alert('请输入宝贝的乳名'); return; }
+      if (!curGender) { alert('请选择性别'); return; }
+      if (!age) { alert('请选择年龄'); return; }
+      const data = { name, gender: curGender, age: parseInt(age), tags: selTags };
+      const id = document.getElementById('editId').value;
+      if (id) ChildStore.update(id, data); else ChildStore.add(data);
+      closeForm(); render();
+    }
+
+    function deleteChild() {
+      const id = document.getElementById('editId').value;
+      if (confirm('确定删除这个宝贝档案吗？')) {
+        ChildStore.remove(id); closeForm(); render();
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>
