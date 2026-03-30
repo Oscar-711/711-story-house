@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>阅读 - 711故事屋</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .reader-page { min-height: 100vh; background: #faf8f5; padding-bottom: 100px; }
+    .reader-header { display: flex; align-items: center; padding: 16px; gap: 12px; }
+    .back-btn { font-size: 24px; cursor: pointer; text-decoration: none; color: #333; }
+    .reader-title { font-size: 20px; font-weight: 700; color: #333; flex: 1; }
+
+    .personal-card { margin: 0 16px 20px; padding: 20px; border-radius: 16px; color: #fff; line-height: 1.8; font-size: 15px; }
+    .opening-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .ending-card { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+
+    .story-content { margin: 0 16px; background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,.04); }
+    .story-text { font-size: 17px; line-height: 2; color: #333; white-space: pre-line; }
+
+    .page-nav { display: flex; justify-content: center; align-items: center; gap: 20px; margin: 20px 16px; }
+    .page-btn { padding: 8px 20px; border-radius: 20px; border: 2px solid var(--accent); background: #fff; color: var(--accent); font-size: 14px; cursor: pointer; }
+    .page-btn:disabled { opacity: .4; cursor: default; }
+    .page-info { font-size: 14px; color: #999; }
+
+    .control-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,.95); backdrop-filter: blur(20px); padding: 12px 20px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); display: flex; justify-content: space-around; border-top: 1px solid #eee; z-index: 100; }
+    .ctrl-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; font-size: 22px; color: #666; padding: 4px 12px; }
+    .ctrl-label { font-size: 11px; color: #999; }
+    .ctrl-btn.active { color: var(--accent); }
+    .ctrl-btn.active .ctrl-label { color: var(--accent); }
+
+    .loading-state { text-align: center; padding: 60px; color: #999; }
+
+    /* 音色选择面板 */
+    .voice-panel { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; }
+    .voice-panel.show { display: flex; align-items: flex-end; }
+    .voice-sheet { background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-height: 60vh; overflow-y: auto; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+    .voice-sheet-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .voice-sheet-close { font-size: 20px; cursor: pointer; color: #999; background: none; border: none; }
+    .voice-item { padding: 12px 16px; border-radius: 12px; margin-bottom: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background .2s; }
+    .voice-item:hover { background: #f5f5f5; }
+    .voice-item.selected { background: rgba(102,126,234,.1); color: var(--accent); }
+    .voice-item .vname { font-size: 14px; }
+    .voice-item .vcheck { font-size: 16px; }
+  </style>
+</head>
+<body>
+  <div class="reader-page">
+    <div class="reader-header">
+      <a class="back-btn" onclick="history.back()">←</a>
+      <div class="reader-title" id="titleText"></div>
+    </div>
+
+    <div class="personal-card opening-card" id="openingCard"></div>
+
+    <div class="story-content">
+      <div class="story-text" id="storyText"></div>
+    </div>
+
+    <div class="page-nav" id="pageNav" style="display:none">
+      <button class="page-btn" id="prevBtn" onclick="prevPage()">◀ 上一页</button>
+      <span class="page-info" id="pageInfo"></span>
+      <button class="page-btn" id="nextBtn" onclick="nextPage()">下一页 ▶</button>
+    </div>
+
+    <div class="personal-card ending-card" id="endingCard" style="display:none"></div>
+
+    <div class="control-bar">
+      <button class="ctrl-btn" id="playBtn" onclick="toggleRead()">
+        <span id="playIcon">▶</span>
+        <span class="ctrl-label" id="playLabel">朗读</span>
+      </button>
+      <button class="ctrl-btn" onclick="showVoicePanel()">
+        <span>🎵</span>
+        <span class="ctrl-label">音色</span>
+      </button>
+      <button class="ctrl-btn" id="favBtn" onclick="toggleFav()">
+        <span id="favIcon">☆</span>
+        <span class="ctrl-label">收藏</span>
+      </button>
+      <button class="ctrl-btn" onclick="shareStory()">
+        <span>📤</span>
+        <span class="ctrl-label">分享</span>
+      </button>
+    </div>
+
+    <div class="loading-state" id="loadingState">加载中...</div>
+  </div>
+
+  <!-- 音色选择面板 -->
+  <div class="voice-panel" id="voicePanel" onclick="if(event.target===this)hideVoicePanel()">
+    <div class="voice-sheet">
+      <div class="voice-sheet-title">
+        <span>🎵 选择音色</span>
+        <button class="voice-sheet-close" onclick="hideVoicePanel()">✕</button>
+      </div>
+      <div id="voiceList"></div>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/personalize.js"></script>
+  <script src="js/story-data.js"></script>
+  <script>
+    let story = null;
+    let child = null;
+    let pages = [];
+    let currentPage = 0;
+    let isFav = false;
+    let isPlaying = false;
+    let storySource = 'library';
+    let selectedVoice = null;
+    let availableVoices = [];
+
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      storySource = params.get('source') || 'library';
+      const storyId = params.get('storyId');
+
+      const allChildren = ChildStore.getAll();
+      child = ChildStore.getDefault() || allChildren[0] || null;
+
+      if (storySource === 'ai' && storyId) {
+        story = StoryStore.get(storyId);
+        if (story) {
+          // Use child from story if available
+          if (story.childId) {
+            child = ChildStore.get(story.childId) || child;
+          }
+        }
+      } else if (storySource === 'library') {
+        story = StoryData.getById(id);
+      }
+
+      if (!story) {
+        document.getElementById('loadingState').textContent = '故事未找到';
+        return;
+      }
+
+      document.getElementById('loadingState').style.display = 'none';
+      renderStory();
+      initVoices();
+    }
+
+    function renderStory() {
+      document.getElementById('titleText').textContent = story.title;
+
+      // 个性化开头
+      if (child) {
+        let openingText;
+        if (storySource === 'ai') {
+          openingText = `亲爱的${child.name}，今晚的故事是专门为你准备的哦！在这个故事里，${child.name}是最厉害的小主角！准备好了吗？故事要开始啦！`;
+        } else {
+          openingText = Personalize.generateOpening(child, story);
+        }
+        document.getElementById('openingCard').textContent = openingText;
+      } else {
+        document.getElementById('openingCard').style.display = 'none';
+      }
+
+      // 分页
+      const content = story.content || '';
+      pages = splitPages(content, 200);
+      currentPage = 0;
+      renderPage();
+
+      // 收藏状态
+      const storyOrigId = story.originalId || story.id;
+      const history = StoryStore.getAll();
+      const saved = history.find(h => h.originalId === storyOrigId || h.id === storyOrigId);
+      isFav = saved ? saved.favorite : (story.favorite || false);
+      updateFavIcon();
+
+      // 记录历史（library stories）
+      if (storySource === 'library') {
+        StoryStore.addToHistory({ originalId: story.id, title: story.title, emoji: story.emoji, category: story.category });
+      } else if (storySource === 'ai') {
+        // Update lastPlayedAt for AI stories
+        StoryStore.update(story.id, { lastPlayedAt: Date.now(), listenCount: (story.listenCount || 0) + 1 });
+      }
+    }
+
+    function splitPages(text, charsPerPage) {
+      if (text.length <= charsPerPage) return [text];
+      const result = [];
+      const sentences = text.split(/(?<=[。！？\n])/);
+      let current = '';
+      for (const s of sentences) {
+        if ((current + s).length > charsPerPage && current) {
+          result.push(current.trim());
+          current = s;
+        } else {
+          current += s;
+        }
+      }
+      if (current.trim()) result.push(current.trim());
+      return result;
+    }
+
+    function renderPage() {
+      document.getElementById('storyText').textContent = pages[currentPage] || '';
+
+      const isLast = currentPage >= pages.length - 1;
+      const isFirst = currentPage === 0;
+
+      if (pages.length > 1) {
+        document.getElementById('pageNav').style.display = 'flex';
+        document.getElementById('prevBtn').disabled = isFirst;
+        document.getElementById('nextBtn').disabled = isLast;
+        document.getElementById('pageInfo').textContent = `${currentPage + 1} / ${pages.length}`;
+      }
+
+      // 最后一页显示结尾
+      if (isLast && child) {
+        let endingText;
+        if (storySource === 'ai') {
+          const tip = story.tip || '🌟 每个孩子都是独一无二的';
+          endingText = `今天${child.name}的冒险结束啦！${tip}。${child.name}小朋友真棒！现在闭上眼睛，让星星守护你的梦乡。晚安，${child.name}！💫`;
+        } else {
+          endingText = Personalize.generateEnding(child, story);
+        }
+        document.getElementById('endingCard').textContent = endingText;
+        document.getElementById('endingCard').style.display = 'block';
+      } else {
+        document.getElementById('endingCard').style.display = 'none';
+      }
+    }
+
+    function prevPage() { if (currentPage > 0) { currentPage--; renderPage(); } }
+    function nextPage() { if (currentPage < pages.length - 1) { currentPage++; renderPage(); } }
+
+    // 推荐音色配置
+    const RECOMMENDED_VOICES = [
+      {
+        name: "zh-CN-XiaoyiNeural",
+        displayName: "晓伊",
+        description: "温柔亲切，像幼儿园老师",
+        isDefault: true
+      },
+      {
+        name: "zh-CN-XiaoxiaoNeural",
+        displayName: "晓晓",
+        description: "情绪表现力强，像大姐姐"
+      },
+      {
+        name: "zh-CN-YunxiNeural",
+        displayName: "云希",
+        description: "沉稳爸爸声，安全感强"
+      }
+    ];
+
+    // Voice management - 使用系统默认音色
+    function initVoices() {
+      const loadVoices = () => {
+        const allVoices = speechSynthesis.getVoices();
+        availableVoices = allVoices.filter(v => v.lang && v.lang.startsWith('zh'));
+        if (availableVoices.length === 0) availableVoices = allVoices;
+        selectedVoice = availableVoices[0] || null;
+      };
+      loadVoices();
+      speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    function showVoicePanel() {
+      const list = document.getElementById('voiceList');
+      if (availableVoices.length === 0) {
+        list.innerHTML = '<div style="padding:20px;text-align:center;color:#999">🎙️ 推荐使用 Edge 浏览器<br><small>可获得晓伊、晓晓、云希三款哄娃音色</small><br><small style="color:#bbb;margin-top:8px;display:block">当前浏览器暂无可用音色</small></div>';
+      } else {
+        list.innerHTML = availableVoices.map((v, i) =>
+          `<div class="voice-item ${selectedVoice && selectedVoice.name === v.name ? 'selected' : ''}" onclick="pickVoice(${i})">
+            <div>
+              <div class="vname" style="font-weight:600">${v.name}</div>
+              <div style="font-size:12px;color:#999;margin-top:2px">${v.lang}</div>
+            </div>
+            <span class="vcheck">${selectedVoice && selectedVoice.name === v.name ? '✓' : ''}</span>
+          </div>`
+        ).join('');
+      }
+      document.getElementById('voicePanel').classList.add('show');
+    }
+
+    function hideVoicePanel() {
+      document.getElementById('voicePanel').classList.remove('show');
+    }
+
+    function pickVoice(idx) {
+      selectedVoice = availableVoices[idx];
+      Settings.set('voiceName', selectedVoice.name);
+      hideVoicePanel();
+    }
+
+    // Web Speech API 朗读
+    function toggleRead() {
+      if (isPlaying) {
+        speechSynthesis.cancel();
+        isPlaying = false;
+        document.getElementById('playIcon').textContent = '▶';
+        document.getElementById('playLabel').textContent = '朗读';
+        return;
+      }
+      
+      // 先cancel防止队列堆积
+      speechSynthesis.cancel();
+      
+      let text = '';
+      if (child) {
+        if (storySource === 'ai') {
+          text += `亲爱的${child.name}，今晚的故事是专门为你准备的哦！准备好了吗？故事要开始啦！`;
+        } else {
+          text += Personalize.generateOpening(child, story);
+        }
+        text += '。';
+      }
+      text += pages[currentPage];
+      if (currentPage >= pages.length - 1 && child) {
+        if (storySource === 'ai') {
+          const tip = story.tip || '每个孩子都是独一无二的';
+          text += `。今天${child.name}的冒险结束啦！${tip}。${child.name}小朋友真棒！晚安！`;
+        } else {
+          text += '。' + Personalize.generateEnding(child, story);
+        }
+      }
+
+      // 清理文本：去掉换行符和多余空白，防止 Speech API 异常
+      text = text.replace(/\n+/g, '。').replace(/。+/g, '。').replace(/^\s+|\s+$/g, '');
+      if (!text) return;
+
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = 'zh-CN';
+      utt.rate = 0.8;
+      utt.pitch = 0.9;
+      if (selectedVoice) utt.voice = selectedVoice;
+      utt.onend = () => { isPlaying = false; document.getElementById('playIcon').textContent = '▶'; document.getElementById('playLabel').textContent = '朗读'; };
+      utt.onerror = (e) => { 
+        console.error('朗读错误:', e); 
+        isPlaying = false; 
+        document.getElementById('playIcon').textContent = '▶'; 
+        document.getElementById('playLabel').textContent = '朗读';
+      };
+      
+      speechSynthesis.cancel();
+      setTimeout(() => {
+        speechSynthesis.speak(utt);
+        isPlaying = true;
+        document.getElementById('playIcon').textContent = '⏸';
+        document.getElementById('playLabel').textContent = '暂停';
+      }, 100);
+    }
+
+    function toggleFav() {
+      isFav = !isFav;
+      const storyOrigId = story.originalId || story.id;
+      if (storySource === 'ai') {
+        StoryStore.update(story.id, { favorite: isFav });
+      } else {
+        StoryStore.setFavorite(storyOrigId, isFav);
+      }
+      updateFavIcon();
+    }
+    function updateFavIcon() {
+      document.getElementById('favIcon').textContent = isFav ? '⭐' : '☆';
+      document.getElementById('favBtn').classList.toggle('active', isFav);
+    }
+
+    function shareStory() {
+      if (navigator.share) {
+        navigator.share({ title: story.title, text: `来听711故事屋的《${story.title}》`, url: window.location.href });
+      } else {
+        navigator.clipboard.writeText(window.location.href).then(() => alert('链接已复制！'));
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
