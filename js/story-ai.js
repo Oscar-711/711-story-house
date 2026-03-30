@@ -1,4 +1,3 @@
-// StoryAI v1.1 - Fixed JSON parsing
 // API 配置：部署后改为 Workers 地址
 const API_CONFIG = {
   // 部署后改为: 'https://your-worker.workers.dev/api/story'
@@ -187,7 +186,13 @@ ${this.safetyGuidelines}
 
   parseStoryJSON(text, childName) {
     // 清理文本：移除 Markdown 代码块标记
-    text = text.replace(/```json\s*/g, '').replace(/```\s*$/g, '').trim();
+    text = text.replace(/```json\s*/gi, '').replace(/```\s*$/gi, '').trim();
+    
+    // 如果有多余的说明文字，尝试提取 JSON 部分
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      text = jsonMatch[0];
+    }
     
     // 提取第一个 {...}
     let start = text.indexOf('{');
@@ -246,7 +251,9 @@ ${this.safetyGuidelines}
     try {
       story = JSON.parse(jsonStr);
     } catch(e) {
-      console.error('JSON解析失败，原始内容:', jsonStr.substring(0, 500));
+      console.error('JSON解析失败，原始内容:', text.substring(0, 1000));
+      console.error('提取的JSON:', jsonStr.substring(0, 1000));
+      console.error('错误信息:', e.message);
       throw new Error('JSON解析失败: ' + e.message);
     }
 
