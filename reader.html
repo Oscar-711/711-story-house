@@ -301,6 +301,12 @@
         return;
       }
       
+      // 检查浏览器支持
+      if (!window.speechSynthesis) {
+        alert('您的浏览器不支持朗读功能，请使用 Edge 或 Chrome 浏览器');
+        return;
+      }
+      
       // 先cancel防止队列堆积
       speechSynthesis.cancel();
       
@@ -323,29 +329,53 @@
         }
       }
 
-      // 清理文本：去掉换行符和多余空白，防止 Speech API 异常
+      // 清理文本
       text = text.replace(/\n+/g, '。').replace(/。+/g, '。').replace(/^\s+|\s+$/g, '');
-      if (!text) return;
+      if (!text) {
+        alert('没有可朗读的内容');
+        return;
+      }
 
       const utt = new SpeechSynthesisUtterance(text);
       utt.lang = 'zh-CN';
       utt.rate = 0.8;
       utt.pitch = 0.9;
       if (selectedVoice) utt.voice = selectedVoice;
-      utt.onend = () => { isPlaying = false; document.getElementById('playIcon').textContent = '▶'; document.getElementById('playLabel').textContent = '朗读'; };
-      utt.onerror = (e) => { 
-        console.error('朗读错误:', e); 
+      
+      utt.onstart = () => {
+        isPlaying = true;
+        document.getElementById('playIcon').textContent = '⏸';
+        document.getElementById('playLabel').textContent = '暂停';
+      };
+      
+      utt.onend = () => { 
         isPlaying = false; 
         document.getElementById('playIcon').textContent = '▶'; 
         document.getElementById('playLabel').textContent = '朗读';
       };
       
-      speechSynthesis.cancel();
+      utt.onerror = (e) => { 
+        console.error('朗读错误:', e); 
+        isPlaying = false; 
+        document.getElementById('playIcon').textContent = '▶'; 
+        document.getElementById('playLabel').textContent = '朗读';
+        if (e.error === 'not-allowed') {
+          alert('朗读需要用户交互后才能启动，请点击页面任意位置后再试');
+        } else if (e.error === 'network') {
+          alert('网络错误，朗读功能暂时不可用');
+        } else {
+          alert('朗读出错: ' + e.error + '，请刷新页面重试');
+        }
+      };
+      
+      // 延迟执行，确保 cancel 完成
       setTimeout(() => {
-        speechSynthesis.speak(utt);
-        isPlaying = true;
-        document.getElementById('playIcon').textContent = '⏸';
-        document.getElementById('playLabel').textContent = '暂停';
+        try {
+          speechSynthesis.speak(utt);
+        } catch(err) {
+          console.error('speak error:', err);
+          alert('启动朗读失败，请使用 Edge 浏览器获得最佳体验');
+        }
       }, 100);
     }
 
