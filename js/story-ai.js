@@ -182,25 +182,32 @@ ${this.safetyGuidelines}
   },
 
   parseStoryJSON(text, childName) {
+    // 清理文本：移除 Markdown 代码块标记
+    text = text.replace(/```json\s*/g, '').replace(/```\s*$/g, '').trim();
+    
     // 提取第一个 {...}
     let start = text.indexOf('{');
     if (start === -1) throw new Error('未找到JSON内容');
 
-    let depth = 0, end = -1;
+    let depth = 0, end = -1, inString = false;
     for (let i = start; i < text.length; i++) {
-      if (text[i] === '{') depth++;
-      else if (text[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
+      const ch = text[i];
+      if (ch === '"' && (i === 0 || text[i-1] !== '\\')) inString = !inString;
+      if (!inString) {
+        if (ch === '{') depth++;
+        else if (ch === '}') { depth--; if (depth === 0) { end = i; break; } }
+      }
     }
 
     let jsonStr;
     if (end === -1) {
       // 截断修复：补齐括号
       jsonStr = text.slice(start);
-      let openBraces = 0, openBrackets = 0, inString = false;
+      let openBraces = 0, openBrackets = 0, inStr = false;
       for (let i = 0; i < jsonStr.length; i++) {
         const ch = jsonStr[i];
-        if (ch === '"' && (i === 0 || jsonStr[i-1] !== '\\')) inString = !inString;
-        if (!inString) {
+        if (ch === '"' && (i === 0 || jsonStr[i-1] !== '\\')) inStr = !inStr;
+        if (!inStr) {
           if (ch === '{') openBraces++;
           else if (ch === '}') openBraces--;
           else if (ch === '[') openBrackets++;
@@ -212,13 +219,21 @@ ${this.safetyGuidelines}
       jsonStr = text.slice(start, end + 1);
     }
 
-    // 清理尾部逗号
+    // 修复常见 JSON 格式问题
+    // 1. 移除注释
+    jsonStr = jsonStr.replace(/\/\/.*$/gm, '');
+    // 2. 修复尾部逗号（数组和对象）
     jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
+    // 3. 修复多余的逗号
+    jsonStr = jsonStr.replace(/,\s*,/g, ',');
+    // 4. 修复未转义的换行符（在字符串内）
+    jsonStr = jsonStr.replace(/("[^"]*?)\n([^"]*?")/g, '$1\\n$2');
 
     let story;
     try {
       story = JSON.parse(jsonStr);
     } catch(e) {
+      console.error('JSON解析失败，原始内容:', jsonStr.substring(0, 500));
       throw new Error('JSON解析失败: ' + e.message);
     }
 
