@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>711故事屋</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#667eea">
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">🌙</div>
+      <h1>711故事屋</h1>
+      <a href="profile.html" class="child-badge" id="childBadge">
+        <span id="childEmoji">👶</span>
+        <span id="childName">添加宝贝</span>
+      </a>
+    </div>
+
+    <div class="no-child-tip" id="no-child-tip">
+      还没有添加宝贝哦～<a href="profile.html">去添加</a>，让故事更有趣！
+    </div>
+
+    <div class="feature-grid">
+      <a href="library.html" class="feature-card">
+        <div class="icon">📚</div>
+        <h3>故事库</h3>
+        <p>格林童话·安徒生·伊索寓言</p>
+      </a>
+      <a href="create.html" class="feature-card">
+        <div class="icon">✨</div>
+        <h3>AI故事</h3>
+        <p>以宝贝为主角的专属故事</p>
+      </a>
+      <div class="feature-card coming-soon">
+        <div class="icon">🎨</div>
+        <h3>AI绘本</h3>
+        <p>宝贝做主角的精美绘本（即将上线）</p>
+      </div>
+      <div class="feature-card coming-soon">
+        <div class="icon">🎙️</div>
+        <h3>声音工坊</h3>
+        <p>用爸爸妈妈的声音讲故事（即将上线）</p>
+      </div>
+    </div>
+
+    <div class="section-title">⭐ 今日推荐</div>
+    <div class="section-title">⭐ 今日推荐</div>
+    <div id="recommendList"></div>
+
+    <div class="section-title">🕐 最近听过</div>
+    <div id="recentList"></div>
+  </div>
+
+  <nav class="nav-bar">
+    <a href="index.html" class="active"><span class="icon">🏠</span>首页</a>
+    <a href="library.html"><span class="icon">📚</span>故事库</a>
+    <a href="create.html"><span class="icon">✨</span>AI创作</a>
+    <a href="profile.html"><span class="icon">👤</span>我的</a>
+  </nav>
+
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/story-data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // Update child badge
+    const child = ChildStore.getDefault();
+
+    // Render recommendations
+    (function() {
+      const list = document.getElementById('recommendList');
+      const stories = StoryData.getRandom(3);
+      list.innerHTML = stories.map(s => `
+        <a href="reader.html?id=${s.id}&source=library" class="story-card">
+          <div class="thumb">${s.emoji}</div>
+          <div class="info"><h4>${s.title}</h4><p>${s.category === 'bedtime' ? '睡前故事' : s.category === 'fairy' ? '童话故事' : s.category === 'fable' ? '寓言故事' : '成语故事'} · ${s.ageRange}岁</p></div>
+        </a>
+      `).join('');
+    })();
+    if (child) {
+      document.getElementById('childEmoji').textContent = getGenderEmoji(child.gender);
+      document.getElementById('childName').textContent = getTimeGreeting() + '，' + child.name;
+    }
+
+    // Render recent history
+    (function() {
+      const list = document.getElementById('recentList');
+      const history = StoryStore.getHistory(5);
+      if (history.length === 0) {
+        list.innerHTML = '<div class="story-card" style="opacity:.5;justify-content:center;"><p style="font-size:13px;color:var(--text-secondary)">还没有听过故事哦，去故事库看看吧～</p></div>';
+        return;
+      }
+      list.innerHTML = history.map(h => {
+        const isAI = h.source === 'ai';
+        const href = isAI ? `reader.html?source=ai&storyId=${h.id}` : `reader.html?source=library&id=${h.originalId}`;
+        return `<a href="${href}" class="story-card">
+          <div class="thumb">${h.emoji || '📖'}</div>
+          <div class="info"><h4>${h.title}</h4><p>${isAI ? 'AI故事' : '故事库'} · 听过${h.listenCount || 1}次</p></div>
+        </a>`;
+      }).join('');
+    })();
+  </script>
+</body>
+</html>
