@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>AI创作 - 711故事屋</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .section { margin-bottom: 20px; }
+    .section-label { font-size: 15px; font-weight: 600; color: var(--text-light); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+
+    /* 孩子选择 */
+    .child-list { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+    .child-chip { display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 16px; background: var(--card-bg); box-shadow: var(--card-shadow); cursor: pointer; white-space: nowrap; border: 2px solid transparent; transition: border-color .2s; flex-shrink: 0; }
+    .child-chip.selected { border-color: var(--accent); }
+    .child-chip .avatar { font-size: 24px; }
+    .child-chip .cname { font-size: 14px; font-weight: 500; }
+    .no-child-card { background: var(--card-bg); border-radius: var(--radius); padding: 24px; text-align: center; color: var(--text-secondary); }
+    .no-child-card a { color: var(--accent); text-decoration: underline; }
+
+    /* 故事类型网格 */
+    .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .type-item { background: var(--card-bg); border-radius: 14px; padding: 14px 8px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all .2s; box-shadow: var(--card-shadow); }
+    .type-item.selected { border-color: var(--accent); background: rgba(102,126,234,0.12); }
+    .type-item .temoji { font-size: 26px; display: block; margin-bottom: 4px; }
+    .type-item .tname { font-size: 13px; color: var(--text-primary); }
+
+    /* 自定义输入 */
+    .custom-input { display: none; margin-top: 10px; }
+    .custom-input.show { display: block; }
+    .custom-input textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px; font-size: 14px; resize: none; height: 70px; background: var(--card-bg); color: var(--text-primary); }
+
+    /* 篇幅选择 */
+    .length-row { display: flex; gap: 8px; }
+    .length-item { flex: 1; padding: 10px 4px; border-radius: 12px; background: var(--card-bg); text-align: center; cursor: pointer; border: 2px solid transparent; transition: all .2s; box-shadow: var(--card-shadow); }
+    .length-item.selected { border-color: var(--accent); background: rgba(102,126,234,0.12); }
+    .length-item .lname { font-size: 13px; font-weight: 500; }
+    .length-item .ldesc { font-size: 11px; color: var(--text-secondary); }
+
+    /* 按钮区 */
+    .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+    .gen-btn { flex: 1; padding: 14px; border: none; border-radius: 16px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+    .gen-btn-text { background: #f0f0f0; color: #333; }
+    .gen-btn-pic { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+    .gen-btn:disabled { opacity: .5; cursor: default; }
+    .coming-tag { font-size: 10px; background: rgba(255,255,255,.3); padding: 2px 6px; border-radius: 8px; margin-left: 4px; }
+
+    /* 加载遮罩 */
+    .loading-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 300; justify-content: center; align-items: center; }
+    .loading-mask.show { display: flex; }
+    .loading-box { background: #fff; border-radius: 20px; padding: 40px 32px; text-align: center; max-width: 280px; }
+    .loading-box .spinner { font-size: 48px; animation: spin 2s linear infinite; display: inline-block; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .loading-box .ltxt { margin-top: 16px; font-size: 15px; color: #333; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h1>✨ AI创作</h1></div>
+
+    <!-- 选择孩子 -->
+    <div class="section">
+      <div class="section-label">👶 选择宝贝</div>
+      <div id="childArea"></div>
+    </div>
+
+    <!-- 故事类型 -->
+    <div class="section">
+      <div class="section-label">📚 故事类型</div>
+      <div class="type-grid" id="typeGrid"></div>
+      <div class="custom-input" id="customInput">
+        <textarea id="customPrompt" placeholder="比如：教孩子学会分享、不怕黑..."></textarea>
+      </div>
+    </div>
+
+    <!-- 篇幅 -->
+    <div class="section">
+      <div class="section-label">📏 篇幅</div>
+      <div class="length-row" id="lengthRow"></div>
+    </div>
+
+    <!-- 按钮 -->
+    <div class="btn-row">
+      <button class="gen-btn gen-btn-text" id="genTextBtn" onclick="doGenerate()">📝 生成故事</button>
+      <button class="gen-btn gen-btn-pic" disabled>🎨 AI绘本<span class="coming-tag">即将上线</span></button>
+    </div>
+    <div style="margin-top:12px;padding:12px;background:#f8f9ff;border-radius:12px;font-size:13px;color:#666;line-height:1.6">
+      <b>🎨 AI绘本功能预告</b><br>
+      以宝贝名字和形象为主角，生成精美绘本故事！<br>
+      支持自定义类型、情节、场景等关键要素<br>
+      每个故事配有多张精美插画，像真正的绘本一样
+    </div>
+  </div>
+
+  <!-- 加载遮罩 -->
+  <div class="loading-mask" id="loadingMask">
+    <div class="loading-box">
+      <div class="spinner">✨</div>
+      <div class="ltxt" id="loadingText">AI正在编织故事...</div>
+    </div>
+  </div>
+
+  <nav class="nav-bar">
+    <a href="index.html"><span class="icon">🏠</span>首页</a>
+    <a href="library.html"><span class="icon">📚</span>故事库</a>
+    <a href="create.html"><span class="icon">✨</span>AI创作</a>
+    <a href="profile.html"><span class="icon">👤</span>我的</a>
+  </nav>
+
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/story-ai.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // State
+    let selectedChildId = null;
+    let selectedType = 'fairy';
+    let selectedLength = 'medium';
+
+    const storyTypes = [
+      { key: 'fairy', emoji: '🧚', name: '童话' },
+      { key: 'fable', emoji: '📖', name: '寓言' },
+      { key: 'myth', emoji: '🐉', name: '神话' },
+      { key: 'animal', emoji: '🐾', name: '动物' },
+      { key: 'scifi', emoji: '🚀', name: '科幻' },
+      { key: 'science', emoji: '🔬', name: '科学' },
+      { key: 'princess', emoji: '👑', name: '公主' },
+      { key: 'ocean', emoji: '🌊', name: '海洋' },
+      { key: 'fantasy', emoji: '✨', name: '奇幻' },
+      { key: 'habit', emoji: '🏠', name: '习惯' },
+      { key: 'friendship', emoji: '🤝', name: '友情' },
+      { key: 'courage', emoji: '💪', name: '勇气' },
+      { key: 'custom', emoji: '📝', name: '自定义' }
+    ];
+
+    const lengths = [
+      { key: 'short', name: '短篇', desc: '300字' },
+      { key: 'medium', name: '中篇', desc: '600字' },
+      { key: 'long', name: '长篇', desc: '1000字' },
+      { key: 'extra', name: '超长篇', desc: '1500字' }
+    ];
+
+    function initPage() {
+      // Children
+      const children = ChildStore.getAll();
+      const area = document.getElementById('childArea');
+      if (children.length === 0) {
+        area.innerHTML = '<div class="no-child-card">还没有宝贝档案哦～<br><a href="profile.html">请先添加宝贝档案</a></div>';
+        document.getElementById('genTextBtn').disabled = true;
+      } else {
+        selectedChildId = (ChildStore.getDefault() || children[0]).id;
+        area.innerHTML = '<div class="child-list">' + children.map(c =>
+          `<div class="child-chip ${c.id === selectedChildId ? 'selected' : ''}" onclick="selectChild('${c.id}')">
+            <span class="avatar">${getGenderEmoji(c.gender)}</span>
+            <span class="cname">${c.name}</span>
+          </div>`
+        ).join('') + '</div>';
+      }
+
+      // Types
+      document.getElementById('typeGrid').innerHTML = storyTypes.map(t =>
+        `<div class="type-item ${t.key === selectedType ? 'selected' : ''}" onclick="selectType('${t.key}')">
+          <span class="temoji">${t.emoji}</span>
+          <span class="tname">${t.name}</span>
+        </div>`
+      ).join('');
+
+      // Lengths
+      document.getElementById('lengthRow').innerHTML = lengths.map(l =>
+        `<div class="length-item ${l.key === selectedLength ? 'selected' : ''}" onclick="selectLength('${l.key}')">
+          <div class="lname">${l.name}</div>
+          <div class="ldesc">${l.desc}</div>
+        </div>`
+      ).join('');
+    }
+
+    function selectChild(id) {
+      selectedChildId = id;
+      document.querySelectorAll('.child-chip').forEach(el => el.classList.toggle('selected', el.onclick.toString().includes(id)));
+      initPage(); // re-render
+    }
+
+    function selectType(key) {
+      selectedType = key;
+      document.querySelectorAll('.type-item').forEach(el => el.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+      document.getElementById('customInput').classList.toggle('show', key === 'custom');
+    }
+
+    function selectLength(key) {
+      selectedLength = key;
+      document.querySelectorAll('.length-item').forEach(el => el.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+    }
+
+    async function doGenerate() {
+      const child = ChildStore.get(selectedChildId);
+      if (!child) { alert('请先选择宝贝'); return; }
+
+      const customPrompt = document.getElementById('customPrompt').value.trim();
+      if (selectedType === 'custom' && !customPrompt) { alert('请输入自定义故事主题'); return; }
+
+      // Show loading
+      document.getElementById('loadingText').textContent = `AI正在为${child.name}编织故事... ✨`;
+      document.getElementById('loadingMask').classList.add('show');
+
+      try {
+        const result = await StoryAI.generateStory({
+          childName: child.name,
+          childAge: child.age || 5,
+          childGender: child.gender,
+          storyType: selectedType,
+          customPrompt,
+          length: selectedLength
+        });
+
+        // Save to StoryStore
+        const saved = StoryStore.add({
+          source: 'ai',
+          title: result.title,
+          emoji: storyTypes.find(t => t.key === selectedType)?.emoji || '✨',
+          category: selectedType,
+          childId: child.id,
+          childName: child.name,
+          pages: result.pages,
+          tip: result.tip || '',
+          moral: result.moral || '',
+          wish: result.wish || '',
+          content: result.pages.map(p => p.text).join('\n\n')
+        });
+
+        // Navigate to reader
+        window.location.href = `reader.html?source=ai&storyId=${saved.id}`;
+      } catch(e) {
+        console.error(e);
+        alert('生成失败：' + e.message);
+      } finally {
+        document.getElementById('loadingMask').classList.remove('show');
+      }
+    }
+
+    initPage();
+  </script>
+</body>
+</html>
