@@ -1,3 +1,4 @@
+// StoryAI v3.0 - 2026-03-30 - Fixed JSON parsing for unquoted keys
 // API 配置：部署后改为 Workers 地址
 const API_CONFIG = {
   // 部署后改为: 'https://your-worker.workers.dev/api/story'
