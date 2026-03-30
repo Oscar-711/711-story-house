@@ -229,22 +229,33 @@ ${this.safetyGuidelines}
     }
 
     // 修复常见 JSON 格式问题
-    // 1. 移除注释
+    // 步骤1: 先将所有单引号临时替换为特殊标记，避免干扰
+    const SINGLE_QUOTE_MARKER = '\x00SINGLE\x00';
+    jsonStr = jsonStr.replace(/'/g, SINGLE_QUOTE_MARKER);
+    
+    // 步骤2: 修复未加引号的属性名（如 {title: "..."} → {"title": "..."}）
+    // 匹配 {key: 或 ,key: 或 [key: 的情况
+    jsonStr = jsonStr.replace(/([{,\[]\s*)([a-zA-Z_\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*)(\s*:)/g, '$1"$2"$3');
+    
+    // 步骤3: 将字符串内的单引号标记替换回实际单引号（但 JSON 需要双引号）
+    // 找到所有双引号字符串，将其中的标记替换为转义单引号
+    jsonStr = jsonStr.replace(/"([^"]*)"/g, function(match, content) {
+      return '"' + content.replace(new RegExp(SINGLE_QUOTE_MARKER, 'g'), "'") + '"';
+    });
+    
+    // 步骤4: 移除注释
     jsonStr = jsonStr.replace(/\/\/.*$/gm, '');
-    // 2. 修复尾部逗号（数组和对象）
+    
+    // 步骤5: 修复尾部逗号（数组和对象）
     jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
-    // 3. 修复多余的逗号
+    
+    // 步骤6: 修复多余的逗号
     jsonStr = jsonStr.replace(/,\s*,/g, ',');
-    // 4. 修复未转义的换行符（在字符串内）
+    
+    // 步骤7: 修复未转义的换行符（在字符串内）
     jsonStr = jsonStr.replace(/("[^"]*?)\n([^"]*?")/g, '$1\\n$2');
-    // 5. 修复未加引号的属性名（如 {title: "..."} → {"title": "..."}）
-    // 匹配 {key: 或 ,key: 的情况
-    jsonStr = jsonStr.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)(\s*:)/g, '$1"$2"$3');
-    // 6. 修复单引号（替换为双引号）- 但要小心不要替换字符串内的单引号
-    // 先处理键名和值周围的单引号
-    jsonStr = jsonStr.replace(/'([^']*?)':/g, '"$1":');
-    jsonStr = jsonStr.replace(/:\s*'([^']*?)'/g, ': "$1"');
-    // 7. 再次清理尾部逗号（修复后可能产生新的）
+    
+    // 步骤8: 再次清理尾部逗号
     jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
 
     let story;
