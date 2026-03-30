@@ -231,6 +231,10 @@ ${this.safetyGuidelines}
     jsonStr = jsonStr.replace(/,\s*,/g, ',');
     // 4. 修复未转义的换行符（在字符串内）
     jsonStr = jsonStr.replace(/("[^"]*?)\n([^"]*?")/g, '$1\\n$2');
+    // 5. 修复未加引号的属性名（如 {title: "..."} → {"title": "..."}）
+    jsonStr = jsonStr.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)(\s*:)/g, '$1"$2"$3');
+    // 6. 修复单引号（替换为双引号）
+    jsonStr = jsonStr.replace(/'/g, '"');
 
     let story;
     try {
