@@ -340,8 +340,12 @@
     }
 
     // Web Speech API 朗读
+    let currentUtterance = null;
+    let isCancelled = false;
+    
     function toggleRead() {
       if (isPlaying) {
+        isCancelled = true;
         speechSynthesis.cancel();
         isPlaying = false;
         document.getElementById('playIcon').textContent = '▶';
@@ -357,6 +361,7 @@
       
       // 先cancel防止队列堆积
       speechSynthesis.cancel();
+      isCancelled = false;
       
       let text = '';
       if (child) {
@@ -385,27 +390,35 @@
         return;
       }
 
-      const utt = new SpeechSynthesisUtterance(text);
-      utt.lang = 'zh-CN';
-      utt.rate = 0.8;
-      utt.pitch = 0.9;
-      if (selectedVoice) utt.voice = selectedVoice;
+      currentUtterance = new SpeechSynthesisUtterance(text);
+      currentUtterance.lang = 'zh-CN';
+      currentUtterance.rate = 0.8;
+      currentUtterance.pitch = 0.9;
+      if (selectedVoice) currentUtterance.voice = selectedVoice;
       
-      utt.onstart = () => {
+      currentUtterance.onstart = () => {
         isPlaying = true;
         document.getElementById('playIcon').textContent = '⏸';
         document.getElementById('playLabel').textContent = '暂停';
       };
       
-      utt.onend = () => { 
+      currentUtterance.onend = () => { 
         isPlaying = false; 
+        currentUtterance = null;
         document.getElementById('playIcon').textContent = '▶'; 
         document.getElementById('playLabel').textContent = '朗读';
       };
       
-      utt.onerror = (e) => { 
-        console.error('朗读错误:', e); 
+      currentUtterance.onerror = (e) => { 
+        console.error('朗读错误:', e);
+        // 如果是用户主动取消，不弹框
+        if (isCancelled || e.error === 'canceled' || e.error === 'interrupted') {
+          console.log('朗读被取消（用户主动暂停）');
+          isCancelled = false;
+          return;
+        }
         isPlaying = false; 
+        currentUtterance = null;
         document.getElementById('playIcon').textContent = '▶'; 
         document.getElementById('playLabel').textContent = '朗读';
         if (e.error === 'not-allowed') {
@@ -420,7 +433,7 @@
       // 延迟执行，确保 cancel 完成
       setTimeout(() => {
         try {
-          speechSynthesis.speak(utt);
+          speechSynthesis.speak(currentUtterance);
         } catch(err) {
           console.error('speak error:', err);
           alert('启动朗读失败，请使用 Edge 浏览器获得最佳体验');
