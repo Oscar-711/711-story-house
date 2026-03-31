@@ -3,29 +3,445 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>宝贝档案 - 711故事屋</title>
+  <title>我的 - 711故事屋</title>
   <link rel="stylesheet" href="css/common.css">
+  <style>
+    .page-header {
+      text-align: center;
+      padding: 32px 0 24px;
+      color: #fff;
+    }
+    
+    .page-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    /* 统计卡片 */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 0 20px 20px;
+    }
+    
+    .stat-card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 16px 8px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .stat-card .number {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      display: block;
+    }
+    
+    .stat-card .label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      margin-top: 4px;
+    }
+    
+    /* 菜单列表 */
+    .menu-section {
+      padding: 0 20px 20px;
+    }
+    
+    .section-title {
+      color: rgba(255,255,255,0.9);
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .menu-list {
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      text-decoration: none;
+      color: #1a1a2e;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      transition: all 0.3s;
+    }
+    
+    .menu-item:last-child {
+      border-bottom: none;
+    }
+    
+    .menu-item:hover {
+      background: rgba(102,126,234,0.05);
+    }
+    
+    .menu-item .icon {
+      font-size: 24px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+      border-radius: 12px;
+    }
+    
+    .menu-item .content {
+      flex: 1;
+    }
+    
+    .menu-item .title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    
+    .menu-item .subtitle {
+      font-size: 12px;
+      color: #636e72;
+      margin-top: 2px;
+    }
+    
+    .menu-item .arrow {
+      font-size: 20px;
+      color: #b2bec3;
+    }
+    
+    /* 宝贝卡片 */
+    .child-card {
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      padding: 20px;
+      margin: 0 20px 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .child-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    
+    .child-avatar {
+      font-size: 48px;
+      width: 64px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+      border-radius: 20px;
+    }
+    
+    .child-info {
+      flex: 1;
+    }
+    
+    .child-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+    
+    .child-meta {
+      font-size: 13px;
+      color: #636e72;
+      margin-top: 4px;
+    }
+    
+    .child-tags {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .child-tag {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: rgba(102,126,234,0.1);
+      color: #667eea;
+    }
+    
+    .add-child-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border: 2px dashed rgba(255,255,255,0.3);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 0 20px 20px;
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+    
+    .add-child-btn:hover {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.5);
+    }
+    
+    /* 空状态 */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: rgba(255,255,255,0.6);
+    }
+    
+    .empty-emoji {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+    
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      justify-content: center;
+      align-items: flex-end;
+      backdrop-filter: blur(5px);
+    }
+    
+    .modal-overlay.show {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 480px;
+      padding: 24px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .modal-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    
+    .modal-close {
+      font-size: 24px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #999;
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1a1a2e;
+    }
+    
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e8e8e8;
+      border-radius: 12px;
+      font-size: 15px;
+      background: #fff;
+      color: #1a1a2e;
+      box-sizing: border-box;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #FF6B6B;
+    }
+    
+    .gender-select {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .gender-option {
+      flex: 1;
+      padding: 16px;
+      border-radius: 12px;
+      border: 2px solid #e8e8e8;
+      text-align: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+    
+    .gender-option.selected {
+      border-color: #FF6B6B;
+      background: rgba(255,107,107,0.1);
+    }
+    
+    .tags-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .tag-option {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 2px solid #e8e8e8;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+    
+    .tag-option.selected {
+      border-color: #FF6B6B;
+      background: rgba(255,107,107,0.1);
+      color: #FF6B6B;
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    
+    .form-actions .btn {
+      flex: 1;
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #666;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>👶 宝贝档案</h1>
+    <div class="page-header">
+      <h1>👤 我的</h1>
     </div>
-
-    <div id="childList"></div>
-
-    <button class="btn btn-block" onclick="openForm()" style="margin-bottom:20px">➕ 添加宝贝</button>
+    
+    <!-- 统计 -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="number" id="statFav">0</span>
+        <span class="label">收藏</span>
+      </div>
+      <div class="stat-card">
+        <span class="number" id="statAI">0</span>
+        <span class="label">AI故事</span>
+      </div>
+      <div class="stat-card">
+        <span class="number" id="statListen">0</span>
+        <span class="label">听过</span>
+      </div>
+    </div>
+    
+    <!-- 宝贝档案 -->
+    <div class="menu-section">
+      <div class="section-title">👶 宝贝档案</div>
+      <div id="childList"></div>
+      <a href="#" class="add-child-btn" onclick="openForm(); return false;">
+        <span>➕</span> 添加宝贝
+      </a>
+    </div>
+    
+    <!-- 我的内容 -->
+    <div class="menu-section">
+      <div class="section-title">📚 我的内容</div>
+      <div class="menu-list">
+        <a href="favorites.html" class="menu-item">
+          <span class="icon">⭐</span>
+          <div class="content">
+            <div class="title">我的收藏</div>
+            <div class="subtitle" id="favSubtitle">暂无收藏</div>
+          </div>
+          <span class="arrow">›</span>
+        </a>
+        <a href="my-stories.html" class="menu-item">
+          <span class="icon">✨</span>
+          <div class="content">
+            <div class="title">我的AI故事</div>
+            <div class="subtitle" id="aiSubtitle">暂无创作</div>
+          </div>
+          <span class="arrow">›</span>
+        </a>
+        <a href="history.html" class="menu-item">
+          <span class="icon">🕐</span>
+          <div class="content">
+            <div class="title">收听历史</div>
+            <div class="subtitle" id="historySubtitle">暂无记录</div>
+          </div>
+          <span class="arrow">›</span>
+        </a>
+      </div>
+    </div>
+    
+    <!-- 设置 -->
+    <div class="menu-section">
+      <div class="section-title">⚙️ 设置</div>
+      <div class="menu-list">
+        <a href="#" class="menu-item" onclick="clearData(); return false;">
+          <span class="icon">🗑️</span>
+          <div class="content">
+            <div class="title">清除数据</div>
+            <div class="subtitle">清除所有本地数据</div>
+          </div>
+          <span class="arrow">›</span>
+        </a>
+      </div>
+    </div>
   </div>
 
-  <!-- Edit Modal -->
+  <!-- 添加/编辑宝贝 Modal -->
   <div class="modal-overlay" id="modal">
     <div class="modal-content">
-      <h2 style="margin-bottom:16px" id="formTitle">添加宝贝</h2>
-      <input type="hidden" id="editId">
-      <div class="form-group">
-        <label>乳名</label>
-        <input type="text" id="fname" placeholder="宝贝的小名">
+      <div class="modal-header">
+        <h2 id="formTitle">添加宝贝</h2>
+        <button class="modal-close" onclick="closeForm()">✕</button>
       </div>
+      
+      <input type="hidden" id="editId">
+      
+      <div class="form-group">
+        <label>宝贝名字</label>
+        <input type="text" id="fname" placeholder="输入宝贝的乳名">
+      </div>
+      
       <div class="form-group">
         <label>性别</label>
         <div class="gender-select">
@@ -33,24 +449,30 @@
           <div class="gender-option" data-v="girl" onclick="selGender('girl')">👧 女孩</div>
         </div>
       </div>
+      
       <div class="form-group">
         <label>年龄</label>
         <select id="fage">
           <option value="">请选择</option>
-          <option value="2">2岁</option><option value="3">3岁</option>
-          <option value="4">4岁</option><option value="5">5岁</option>
-          <option value="6">6岁</option><option value="7">7岁</option>
+          <option value="2">2岁</option>
+          <option value="3">3岁</option>
+          <option value="4">4岁</option>
+          <option value="5">5岁</option>
+          <option value="6">6岁</option>
+          <option value="7">7岁</option>
           <option value="8">8岁</option>
         </select>
       </div>
+      
       <div class="form-group">
-        <label>喜好标签</label>
+        <label>喜好标签（可多选）</label>
         <div class="tags-grid" id="tagsGrid"></div>
       </div>
+      
       <div class="form-actions">
         <button class="btn" onclick="saveChild()">💾 保存</button>
-        <button class="btn btn-danger" id="delBtn" onclick="deleteChild()" style="display:none">🗑️ 删除</button>
-        <button class="btn" style="background:#aaa" onclick="closeForm()">取消</button>
+        <button class="btn btn-secondary" onclick="closeForm()">取消</button>
+        <button class="btn btn-danger" id="delBtn" onclick="deleteChild()" style="display:none; background: #e74c3c;">🗑️ 删除</button>
       </div>
     </div>
   </div>
@@ -59,30 +481,51 @@
     <a href="index.html"><span class="icon">🏠</span>首页</a>
     <a href="library.html"><span class="icon">📚</span>故事库</a>
     <a href="create.html"><span class="icon">✨</span>AI创作</a>
-    <a href="profile.html"><span class="icon">👤</span>我的</a>
+    <a href="profile.html" class="active"><span class="icon">👤</span>我的</a>
   </nav>
 
   <script src="js/utils.js"></script>
   <script src="js/storage.js"></script>
-  <script src="js/app.js"></script>
   <script>
     const ALL_TAGS = ['恐龙','公主','太空','动物','海洋','魔法','汽车','童话','机器人','花草'];
     let selTags = [], curGender = '';
 
     function render() {
-      const list = ChildStore.getAll();
+      // 渲染宝贝列表
+      const children = ChildStore.getAll();
       const el = document.getElementById('childList');
-      if (!list.length) { el.innerHTML = '<div class="card" style="text-align:center;color:var(--text-secondary)">还没有添加宝贝哦～</div>'; return; }
-      el.innerHTML = list.map(c => `
-        <div class="card child-list-card" onclick="openForm('${c.id}')">
-          <div class="avatar">${getGenderEmoji(c.gender)}</div>
-          <div class="meta">
-            <h3>${c.name}</h3>
-            <p>${c.age}岁 · ${c.gender==='girl'?'女孩':'男孩'}</p>
-            <div>${(c.tags||[]).map(t=>'<span class="tag">'+t+'</span>').join('')}</div>
+      
+      if (!children.length) {
+        el.innerHTML = '';
+      } else {
+        el.innerHTML = children.map(c => `
+          <div class="child-card" onclick="openForm('${c.id}')">
+            <div class="child-avatar">${getGenderEmoji(c.gender)}</div>
+            <div class="child-info">
+              <div class="child-name">${c.name}</div>
+              <div class="child-meta">${c.age}岁 · ${c.gender === 'girl' ? '女孩' : '男孩'}</div>
+              <div class="child-tags">
+                ${(c.tags || []).slice(0, 3).map(t => `<span class="child-tag">${t}</span>`).join('')}
+              </div>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `).join('');
+      }
+      
+      // 更新统计
+      const allStories = StoryStore.getAll();
+      const favCount = allStories.filter(s => s.favorite).length;
+      const aiCount = allStories.filter(s => s.source === 'ai' || !s.originalId).length;
+      const listenCount = allStories.filter(s => s.listenCount).reduce((sum, s) => sum + (s.listenCount || 0), 0);
+      
+      document.getElementById('statFav').textContent = favCount;
+      document.getElementById('statAI').textContent = aiCount;
+      document.getElementById('statListen').textContent = listenCount;
+      
+      // 更新副标题
+      document.getElementById('favSubtitle').textContent = favCount > 0 ? `${favCount}个收藏` : '暂无收藏';
+      document.getElementById('aiSubtitle').textContent = aiCount > 0 ? `${aiCount}个AI故事` : '暂无创作';
+      document.getElementById('historySubtitle').textContent = listenCount > 0 ? `听过${listenCount}次` : '暂无记录';
     }
 
     function initTags() {
@@ -93,7 +536,7 @@
 
     function toggleTag(t) {
       const i = selTags.indexOf(t);
-      if (i>=0) selTags.splice(i,1); else selTags.push(t);
+      if (i >= 0) selTags.splice(i, 1); else selTags.push(t);
       document.querySelectorAll('.tag-option').forEach(el => {
         el.classList.toggle('selected', selTags.includes(el.dataset.t));
       });
@@ -114,7 +557,7 @@
         document.getElementById('fname').value = c.name;
         document.getElementById('fage').value = c.age;
         selGender(c.gender);
-        selTags = [...(c.tags||[])];
+        selTags = [...(c.tags || [])];
         document.querySelectorAll('.tag-option').forEach(el => {
           el.classList.toggle('selected', selTags.includes(el.dataset.t));
         });
@@ -124,31 +567,47 @@
         document.getElementById('editId').value = '';
         document.getElementById('fname').value = '';
         document.getElementById('fage').value = '';
-        curGender = ''; selTags = [];
+        curGender = '';
+        selTags = [];
+        document.querySelectorAll('.gender-option').forEach(el => el.classList.remove('selected'));
+        document.querySelectorAll('.tag-option').forEach(el => el.classList.remove('selected'));
         document.getElementById('formTitle').textContent = '添加宝贝';
         document.getElementById('delBtn').style.display = 'none';
       }
       document.getElementById('modal').classList.add('show');
     }
 
-    function closeForm() { document.getElementById('modal').classList.remove('show'); }
+    function closeForm() {
+      document.getElementById('modal').classList.remove('show');
+    }
 
     function saveChild() {
       const name = document.getElementById('fname').value.trim();
       const age = document.getElementById('fage').value;
-      if (!name) { alert('请输入宝贝的乳名'); return; }
+      if (!name) { alert('请输入宝贝的名字'); return; }
       if (!curGender) { alert('请选择性别'); return; }
       if (!age) { alert('请选择年龄'); return; }
       const data = { name, gender: curGender, age: parseInt(age), tags: selTags };
       const id = document.getElementById('editId').value;
       if (id) ChildStore.update(id, data); else ChildStore.add(data);
-      closeForm(); render();
+      closeForm();
+      render();
     }
 
     function deleteChild() {
       const id = document.getElementById('editId').value;
       if (confirm('确定删除这个宝贝档案吗？')) {
-        ChildStore.remove(id); closeForm(); render();
+        ChildStore.remove(id);
+        closeForm();
+        render();
+      }
+    }
+    
+    function clearData() {
+      if (confirm('确定清除所有数据吗？此操作不可恢复！')) {
+        localStorage.clear();
+        alert('数据已清除');
+        location.reload();
       }
     }
 
