@@ -109,7 +109,92 @@
 
   <script src="js/utils.js?v=3"></script>
   <script src="js/storage.js?v=3"></script>
-  <script src="js/story-engine.js"></script>
+  <script>
+// === INLINED story-ai.js v4.0 (bypass CDN cache) ===
+const API_CONFIG = {
+  storyUrl: 'https://api.stepfun.com/v1/chat/completions',
+  ttsUrl: null,
+  apiKey: '4oS7T7XAKtsj9jA21J0ThpPqbU6UXmVmFeLdEOLLNGpaiGrcHi9Mym5aRNtWnHiix'
+};
+const StoryAI = {
+  API_URL: API_CONFIG.storyUrl,
+  API_KEY: API_CONFIG.apiKey,
+  MODEL: 'step-3.5-flash',
+  lengthConfig: {
+    short:  { wordCount: 300,  pageCount: 2, desc: '短篇' },
+    medium: { wordCount: 600,  pageCount: 4, desc: '中篇' },
+    long:   { wordCount: 1000, pageCount: 6, desc: '长篇' },
+    extra:  { wordCount: 1500, pageCount: 8, desc: '超长篇' }
+  },
+  typeDesc: {
+    fairy: '童话故事', fable: '寓言故事', myth: '神话传说',
+    animal: '动物故事', scifi: '科幻冒险', science: '科学探索',
+    princess: '公主故事', ocean: '海洋冒险', fantasy: '奇幻冒险',
+    habit: '好习惯养成', friendship: '友情故事', courage: '勇气故事',
+    custom: '自定义'
+  },
+  safetyGuidelines: '禁止恐怖、焦虑、不当示范、危险行为、复杂负面情绪内容。用温馨安全的方式替代。',
+  getCognitiveElements(age) {
+    if (age <= 3) return '融入基础认知：数数(1-5)、基本颜色、简单形状。句子简短(10字以内)，多用叠词和拟声词';
+    if (age <= 4) return '融入基础认知：数数(1-10)、颜色、形状、常见动物。句子简短，适当重复';
+    if (age <= 6) return '融入社交认知：情感词汇(开心/难过/骄傲)、社交概念(分享/轮流/说请和谢谢)';
+    return '融入成长认知：简单逻辑推理、因果关系、友谊与合作的深层意义';
+  },
+  getLanguageStyle(age) {
+    if (age <= 3) return '语言风格：句子极短(5-10字)，节奏重复，多用叠词和拟声词';
+    if (age <= 4) return '语言风格：句子简短(10-15字)，节奏舒缓，多用拟声词';
+    return '语言风格：优美生动，适当使用形容词，情节完整有起伏';
+  },
+  async generateStory(opts) {
+    try { return await this._doGenerate(opts); }
+    catch(e) {
+      if (window.location.protocol === 'file:') return this._getMockStory(opts.childName, opts.childAge, opts.childGender, opts.storyType);
+      throw e;
+    }
+  },
+  _getMockStory(childName, childAge, childGender, storyType) {
+    return {
+      title: childName + '的奇妙冒险',
+      pages: [
+        { text: '从前，在一个美丽的彩虹山谷里，住着一个叫' + childName + '的小朋友。一天早晨，' + childName + '发现家门口多了一扇神奇的小门。', scene: '彩虹山谷' },
+        { text: childName + '推开门，发现了一个奇妙的花园！会说话的花朵、跳舞的蝴蝶。太阳下山了，' + childName + '带着星星种子回到家，做了一个甜甜的梦。', scene: '梦想花园' }
+      ],
+      tip: '勇敢不是不害怕，而是即使害怕也愿意尝试',
+      moral: '善良和勇敢能让世界变得更美好',
+      wish: childName + '能永远保持善良和勇敢的心'
+    };
+  },
+  async _doGenerate({ childName, childAge, childGender, storyType, customPrompt, length }) {
+    const cfg = this.lengthConfig[length] || this.lengthConfig.medium;
+    const genderDesc = childGender === 'girl' ? '女孩' : '男孩';
+    const pronoun = childGender === 'girl' ? '她' : '他';
+    let typeDesc = this.typeDesc[storyType] || '童话故事';
+    if (storyType === 'custom' && customPrompt) typeDesc = '关于"' + customPrompt + '"的定制故事';
+    const scenes = ['魔法森林', '彩虹山谷', '星星湖畔', '云朵城堡', '糖果小镇', '水晶海底'];
+    const scene = scenes[Math.floor(Math.random() * scenes.length)];
+    const prompt = '你是一位专业的儿童睡前故事作家。请为一个叫"' + childName + '"的' + childAge + '岁' + genderDesc + '创作一个睡前故事。主角：' + childName + '（' + genderDesc + '），场景：' + scene + '，类型：' + typeDesc + '，字数：约' + cfg.wordCount + '字，分成' + cfg.pageCount + '个自然段落。风格温馨优美，适当使用拟声词。' + this.getCognitiveElements(childAge) + ' ' + this.getLanguageStyle(childAge) + ' ' + this.safetyGuidelines + ' 请按以下JSON格式输出（只输出JSON）：{"title":"故事标题（包含' + childName + '）","pages":[{"text":"段落内容","scene":"场景画面描述"}],"tip":"给' + childName + '的成长小贴士","moral":"核心道理（一句话）","wish":"对' + childName + '的温馨祝愿"}';
+    const res = await fetch(this.API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.API_KEY },
+      body: JSON.stringify({
+        model: this.MODEL,
+        max_tokens: 4096,
+        temperature: 0.8,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: '你是一个专业的儿童睡前故事创作助手。请始终用中文回复，输出合法的JSON格式，不要输出任何非JSON内容。' },
+          { role: 'user', content: prompt }
+        ]
+      })
+    });
+    if (!res.ok) { const err = await res.text(); throw new Error('API请求失败: ' + res.status); }
+    const data = await res.json();
+    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || '';
+    return JSON.parse(content);
+  }
+};
+// === END INLINED ===
+  </script>
   <script src="js/app.js?v=3"></script>
   <script>
     // State
