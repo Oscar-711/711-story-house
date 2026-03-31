@@ -236,52 +236,95 @@
     function prevPage() { if (currentPage > 0) { currentPage--; renderPage(); } }
     function nextPage() { if (currentPage < pages.length - 1) { currentPage++; renderPage(); } }
 
-    // 推荐音色配置
+    // 推荐音色配置 - Edge 专属
     const RECOMMENDED_VOICES = [
-      {
-        name: "zh-CN-XiaoyiNeural",
-        displayName: "晓伊",
-        description: "温柔亲切，像幼儿园老师",
-        isDefault: true
-      },
-      {
-        name: "zh-CN-XiaoxiaoNeural",
-        displayName: "晓晓",
-        description: "情绪表现力强，像大姐姐"
-      },
-      {
-        name: "zh-CN-YunxiNeural",
-        displayName: "云希",
-        description: "沉稳爸爸声，安全感强"
-      }
+      { name: "Microsoft Xiaoyi Online (Natural)", displayName: "晓伊", description: "温柔亲切，像幼儿园老师", isDefault: true },
+      { name: "Microsoft Xiaoxiao Online (Natural)", displayName: "晓晓", description: "情绪表现力强，像大姐姐" },
+      { name: "Microsoft Yunxi Online (Natural)", displayName: "云希", description: "沉稳爸爸声，安全感强" }
     ];
 
-    // Voice management - 使用系统默认音色
+    // 检测是否是 Edge 浏览器
+    function isEdgeBrowser() {
+      return navigator.userAgent.includes('Edg') && !navigator.userAgent.includes('OPR');
+    }
+
+    // Voice management - 智能选择最佳音色
     function initVoices() {
       const loadVoices = () => {
         const allVoices = speechSynthesis.getVoices();
-        availableVoices = allVoices.filter(v => v.lang && v.lang.startsWith('zh'));
-        if (availableVoices.length === 0) availableVoices = allVoices;
-        selectedVoice = availableVoices[0] || null;
+        
+        // 优先找推荐的中文音色
+        for (const rec of RECOMMENDED_VOICES) {
+          const found = allVoices.find(v => v.name === rec.name);
+          if (found) {
+            selectedVoice = found;
+            console.log('找到推荐音色:', rec.displayName);
+            break;
+          }
+        }
+        
+        // 如果没找到推荐的，找任意中文音色
+        if (!selectedVoice) {
+          availableVoices = allVoices.filter(v => v.lang && v.lang.startsWith('zh'));
+          if (availableVoices.length > 0) {
+            selectedVoice = availableVoices[0];
+          }
+        }
+        
+        // 如果还没有，用所有可用音色
+        if (!selectedVoice) {
+          availableVoices = allVoices;
+          selectedVoice = availableVoices[0] || null;
+        }
+        
+        console.log('当前音色:', selectedVoice?.name || '无');
       };
+      
       loadVoices();
       speechSynthesis.onvoiceschanged = loadVoices;
     }
 
     function showVoicePanel() {
       const list = document.getElementById('voiceList');
+      const isEdge = isEdgeBrowser();
+      
       if (availableVoices.length === 0) {
-        list.innerHTML = '<div style="padding:20px;text-align:center;color:#999">🎙️ 推荐使用 Edge 浏览器<br><small>可获得晓伊、晓晓、云希三款哄娃音色</small><br><small style="color:#bbb;margin-top:8px;display:block">当前浏览器暂无可用音色</small></div>';
+        list.innerHTML = `
+          <div style="padding:20px;text-align:center;color:#999">
+            <div style="font-size:32px;margin-bottom:12px">🎙️</div>
+            <div style="font-weight:600;margin-bottom:8px">当前浏览器暂无可用音色</div>
+            <div style="font-size:13px;color:#bbb;margin-bottom:16px">
+              推荐使用 <b>Microsoft Edge</b> 浏览器<br>
+              可获得晓伊、晓晓、云希三款哄娃音色
+            </div>
+            <div style="font-size:12px;color:#ccc;background:#f5f5f5;padding:10px;border-radius:8px">
+              💡 提示：Edge 浏览器的 TTS 完全免费<br>
+              且支持晓伊、晓晓等高质量中文音色
+            </div>
+          </div>`;
       } else {
-        list.innerHTML = availableVoices.map((v, i) =>
-          `<div class="voice-item ${selectedVoice && selectedVoice.name === v.name ? 'selected' : ''}" onclick="pickVoice(${i})">
+        // 显示可用音色，优先显示推荐的
+        const voicesHtml = availableVoices.map((v, i) => {
+          const rec = RECOMMENDED_VOICES.find(r => r.name === v.name);
+          const isRecommended = !!rec;
+          const displayName = rec ? `${rec.displayName} (${rec.description})` : v.name;
+          const badge = isRecommended ? '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:8px">推荐</span>' : '';
+          
+          return `<div class="voice-item ${selectedVoice && selectedVoice.name === v.name ? 'selected' : ''}" onclick="pickVoice(${i})">
             <div>
-              <div class="vname" style="font-weight:600">${v.name}</div>
-              <div style="font-size:12px;color:#999;margin-top:2px">${v.lang}</div>
+              <div class="vname" style="font-weight:600">${displayName}${badge}</div>
+              <div style="font-size:12px;color:#999;margin-top:2px">${v.lang || '未知语言'}</div>
             </div>
             <span class="vcheck">${selectedVoice && selectedVoice.name === v.name ? '✓' : ''}</span>
-          </div>`
-        ).join('');
+          </div>`;
+        }).join('');
+        
+        const edgeTip = isEdge ? '' : `
+          <div style="padding:12px;margin-bottom:12px;background:#fff8e6;border-radius:8px;font-size:12px;color:#996600">
+            💡 <b>提示：</b>使用 Microsoft Edge 浏览器可获得晓伊、晓晓、云希等更高质量的哄娃音色
+          </div>`;
+        
+        list.innerHTML = edgeTip + voicesHtml;
       }
       document.getElementById('voicePanel').classList.add('show');
     }
