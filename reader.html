@@ -57,12 +57,6 @@
       <div class="story-text" id="storyText"></div>
     </div>
 
-    <div class="page-nav" id="pageNav" style="display:none">
-      <button class="page-btn" id="prevBtn" onclick="prevPage()">◀ 上一页</button>
-      <span class="page-info" id="pageInfo"></span>
-      <button class="page-btn" id="nextBtn" onclick="nextPage()">下一页 ▶</button>
-    </div>
-
     <div class="personal-card ending-card" id="endingCard" style="display:none"></div>
 
     <div class="control-bar">
@@ -160,11 +154,22 @@
         document.getElementById('openingCard').style.display = 'none';
       }
 
-      // 分页
+      // 整篇展示，不分页
       const content = story.content || '';
-      pages = splitPages(content, 200);
-      currentPage = 0;
-      renderPage();
+      document.getElementById('storyText').textContent = content;
+
+      // 直接显示结尾
+      if (child) {
+        let endingText;
+        if (storySource === 'ai') {
+          const tip = story.tip || '🌟 每个孩子都是独一无二的';
+          endingText = `今天${child.name}的冒险结束啦！${tip}。${child.name}小朋友真棒！现在闭上眼睛，让星星守护你的梦乡。晚安，${child.name}！💫`;
+        } else {
+          endingText = Personalize.generateEnding(child, story);
+        }
+        document.getElementById('endingCard').textContent = endingText;
+        document.getElementById('endingCard').style.display = 'block';
+      }
 
       // 收藏状态
       const storyOrigId = story.originalId || story.id;
@@ -319,8 +324,9 @@
         }
         text += '。';
       }
-      text += pages[currentPage];
-      if (currentPage >= pages.length - 1 && child) {
+      // 朗读整篇故事
+      text += story.content || '';
+      if (child) {
         if (storySource === 'ai') {
           const tip = story.tip || '每个孩子都是独一无二的';
           text += `。今天${child.name}的冒险结束啦！${tip}。${child.name}小朋友真棒！晚安！`;
