@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>收听历史 - 711故事屋</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+      color: #fff;
+    }
+    
+    .back-btn {
+      font-size: 24px;
+      text-decoration: none;
+      color: #fff;
+      padding: 8px;
+    }
+    
+    .page-header h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    
+    .clear-btn {
+      margin-left: auto;
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+    }
+    
+    .story-list {
+      padding: 0 20px 100px;
+    }
+    
+    .story-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      text-decoration: none;
+      color: #1a1a2e;
+      transition: all 0.3s;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .story-card:hover {
+      transform: translateX(4px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    
+    .story-emoji {
+      font-size: 44px;
+      min-width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(78,205,196,0.1), rgba(78,205,196,0.2));
+      border-radius: 16px;
+    }
+    
+    .story-info {
+      flex: 1;
+    }
+    
+    .story-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .story-meta {
+      font-size: 13px;
+      color: #636e72;
+    }
+    
+    .story-count {
+      font-size: 12px;
+      padding: 4px 10px;
+      background: rgba(78,205,196,0.15);
+      color: #4ECDC4;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    
+    .story-arrow {
+      font-size: 20px;
+      color: #b2bec3;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 100px 20px;
+      color: rgba(255,255,255,0.7);
+    }
+    
+    .empty-emoji {
+      font-size: 80px;
+      margin-bottom: 20px;
+    }
+    
+    .empty-state h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+    
+    .empty-state p {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 24px;
+    }
+    
+    .btn-outline {
+      display: inline-block;
+      padding: 12px 24px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 24px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+    
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.25);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+      <a href="profile.html" class="back-btn">←</a>
+      <h1>🕐 收听历史</h1>
+      <button class="clear-btn" onclick="clearHistory()" id="clearBtn" style="display:none">清空</button>
+    </div>
+    
+    <div class="story-list" id="historyList"></div>
+    
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="empty-emoji">🕐</div>
+      <h3>还没有收听记录</h3>
+      <p>开始听故事，<br>这里会记录宝贝的收听历史</p>
+      <a href="library.html" class="btn-outline">去故事库</a>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/story-data.js"></script>
+  <script>
+    function render() {
+      const history = StoryStore.getHistory(50);
+      const list = document.getElementById('historyList');
+      const empty = document.getElementById('emptyState');
+      const clearBtn = document.getElementById('clearBtn');
+      
+      if (history.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = 'block';
+        clearBtn.style.display = 'none';
+        return;
+      }
+      
+      empty.style.display = 'none';
+      clearBtn.style.display = 'block';
+      
+      list.innerHTML = history.map(h => {
+        // 尝试从故事库获取完整信息
+        const storyData = h.originalId ? StoryData.getById(h.originalId) : null;
+        const emoji = storyData ? storyData.emoji : (h.emoji || '📖');
+        const title = storyData ? storyData.title : (h.title || '未知故事');
+        const category = storyData ? (storyData.category === 'bedtime' ? '睡前' : storyData.category === 'fairy' ? '童话' : storyData.category === 'fable' ? '寓言' : storyData.category === 'aesop' ? '寓言' : storyData.category === 'grimm' ? '格林' : storyData.category === 'andersen' ? '安徒生' : '故事') : '故事';
+        const listenCount = h.listenCount || 1;
+        
+        return `
+          <a href="reader.html?id=${h.originalId || h.id}&source=library" class="story-card">
+            <div class="story-emoji">${emoji}</div>
+            <div class="story-info">
+              <div class="story-title">${title}</div>
+              <div class="story-meta">${category} · 上次收听 ${formatDate(h.lastPlayedAt)}</div>
+            </div>
+            ${listenCount > 1 ? `<span class="story-count">听过${listenCount}次</span>` : ''}
+            <span class="story-arrow">›</span>
+          </a>
+        `;
+      }).join('');
+    }
+    
+    function clearHistory() {
+      if (confirm('确定清空所有收听历史吗？')) {
+        // 清除历史记录（保留收藏和AI故事）
+        const allStories = StoryStore.getAll();
+        const keepStories = allStories.filter(s => s.favorite || !s.originalId);
+        localStorage.setItem('story711_stories', JSON.stringify(keepStories));
+        render();
+      }
+    }
+    
+    render();
+  </script>
+</body>
+</html>
