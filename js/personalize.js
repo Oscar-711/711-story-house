@@ -9,7 +9,7 @@ const Personalize = {
   generateOpening(child, story) {
     if (!child) return '';
     const vars = this._buildVars(child, story);
-    const template = `亲爱的${vars.name}小朋友，今天${vars.timeGreeting}要给你讲的是一个关于${vars.topic}的${vars.category}故事，故事的名字叫《${vars.title}》。准备好了吗？让我们一起来听吧！`;
+    const template = `亲爱的${vars.name}小朋友，今天${vars.timeGreeting}，要给你讲的是一个关于${vars.topic}的${vars.category}故事，故事的名字叫《${vars.title}》。准备好了吗？让我们一起来听吧！`;
     return template;
   },
 
