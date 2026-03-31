@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>我的收藏 - 711故事屋</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+      color: #fff;
+    }
+    
+    .back-btn {
+      font-size: 24px;
+      text-decoration: none;
+      color: #fff;
+      padding: 8px;
+    }
+    
+    .page-header h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    
+    .story-list {
+      padding: 0 20px 100px;
+    }
+    
+    .story-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      text-decoration: none;
+      color: #1a1a2e;
+      transition: all 0.3s;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .story-card:hover {
+      transform: translateX(4px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    
+    .story-emoji {
+      font-size: 44px;
+      min-width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(255,107,107,0.1), rgba(255,142,83,0.1));
+      border-radius: 16px;
+    }
+    
+    .story-info {
+      flex: 1;
+    }
+    
+    .story-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .story-meta {
+      font-size: 13px;
+      color: #636e72;
+    }
+    
+    .story-arrow {
+      font-size: 20px;
+      color: #b2bec3;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 100px 20px;
+      color: rgba(255,255,255,0.7);
+    }
+    
+    .empty-emoji {
+      font-size: 80px;
+      margin-bottom: 20px;
+    }
+    
+    .empty-state h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+    
+    .empty-state p {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 24px;
+    }
+    
+    .btn-outline {
+      display: inline-block;
+      padding: 12px 24px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 24px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+    
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.25);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+      <a href="profile.html" class="back-btn">←</a>
+      <h1>⭐ 我的收藏</h1>
+    </div>
+    
+    <div class="story-list" id="favList"></div>
+    
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="empty-emoji">⭐</div>
+      <h3>还没有收藏故事</h3>
+      <p>在听故事时点击收藏按钮，<br>喜欢的故事就会出现在这里</p>
+      <a href="library.html" class="btn-outline">去故事库看看</a>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/story-data.js"></script>
+  <script>
+    function render() {
+      const favorites = StoryStore.getAll().filter(s => s.favorite);
+      const list = document.getElementById('favList');
+      const empty = document.getElementById('emptyState');
+      
+      if (favorites.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      
+      empty.style.display = 'none';
+      
+      list.innerHTML = favorites.map(s => {
+        // 尝试从故事库获取完整信息
+        const storyData = s.originalId ? StoryData.getById(s.originalId) : null;
+        const emoji = storyData ? storyData.emoji : (s.emoji || '📖');
+        const title = storyData ? storyData.title : (s.title || '未知故事');
+        const category = storyData ? (storyData.category === 'bedtime' ? '睡前' : storyData.category === 'fairy' ? '童话' : storyData.category === 'fable' ? '寓言' : '成语') : '故事';
+        
+        return `
+          <a href="reader.html?id=${s.originalId || s.id}&source=library" class="story-card">
+            <div class="story-emoji">${emoji}</div>
+            <div class="story-info">
+              <div class="story-title">${title}</div>
+              <div class="story-meta">${category} · 收藏于 ${formatDate(s.updatedAt || s.createdAt)}</div>
+            </div>
+            <span class="story-arrow">›</span>
+          </a>
+        `;
+      }).join('');
+    }
+    
+    render();
+  </script>
+</body>
+</html>
