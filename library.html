@@ -2,57 +2,261 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>故事库 - 711故事屋</title>
   <link rel="stylesheet" href="css/common.css">
   <style>
-    .filter-bar { padding: 16px; position: sticky; top: 0; background: var(--bg); z-index: 10; }
-    .category-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; -webkit-overflow-scrolling: touch; }
+    .page-header {
+      text-align: center;
+      padding: 24px 0 16px;
+      color: #fff;
+    }
+    
+    .page-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .page-header p {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+    
+    .filter-bar { 
+      padding: 0 20px 16px; 
+      position: sticky; 
+      top: 0; 
+      z-index: 10;
+      background: linear-gradient(180deg, rgba(26,26,46,0.95) 0%, rgba(26,26,46,0.8) 100%);
+      backdrop-filter: blur(20px);
+    }
+    
+    .category-tabs { 
+      display: flex; 
+      gap: 10px; 
+      overflow-x: auto; 
+      padding: 8px 0 12px;
+      scrollbar-width: none;
+    }
+    
     .category-tabs::-webkit-scrollbar { display: none; }
-    .tab-btn { white-space: nowrap; padding: 8px 16px; border-radius: 20px; border: 2px solid #e0e0e0; background: #fff; font-size: 14px; cursor: pointer; transition: all .3s; }
-    .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .age-filter { display: flex; gap: 8px; margin-bottom: 12px; }
-    .age-btn { padding: 6px 12px; border-radius: 16px; border: 1px solid #ddd; background: #fff; font-size: 12px; cursor: pointer; }
-    .age-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-    .search-box { width: 100%; padding: 10px 16px; border: 2px solid #e8e0ff; border-radius: 12px; font-size: 14px; box-sizing: border-box; }
-    .story-list { padding: 0 16px 100px; }
-    .story-card { display: flex; gap: 16px; background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.04); cursor: pointer; transition: transform .2s; }
-    .story-card:active { transform: scale(.98); }
-    .story-emoji { font-size: 40px; min-width: 50px; display: flex; align-items: center; justify-content: center; }
-    .story-info { flex: 1; }
-    .story-title { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 4px; }
-    .story-desc { font-size: 13px; color: #999; line-height: 1.5; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .story-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-    .story-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #f0f0f0; color: #666; }
-    .empty-state { text-align: center; padding: 60px 20px; color: #999; }
-    .empty-emoji { font-size: 48px; margin-bottom: 12px; }
+    
+    .tab-btn { 
+      white-space: nowrap; 
+      padding: 10px 18px; 
+      border-radius: 24px; 
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.8);
+      font-size: 14px; 
+      cursor: pointer; 
+      transition: all 0.3s;
+      backdrop-filter: blur(10px);
+    }
+    
+    .tab-btn.active { 
+      background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+      color: #fff; 
+      border-color: transparent;
+      box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+    }
+    
+    .tab-btn:hover:not(.active) {
+      background: rgba(255,255,255,0.2);
+    }
+    
+    .search-box-wrapper {
+      position: relative;
+      margin-top: 8px;
+    }
+    
+    .search-box { 
+      width: 100%; 
+      padding: 12px 16px 12px 44px; 
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 16px; 
+      font-size: 15px; 
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      box-sizing: border-box;
+      transition: all 0.3s;
+    }
+    
+    .search-box::placeholder {
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .search-box:focus {
+      outline: none;
+      border-color: rgba(255,107,107,0.5);
+      background: rgba(255,255,255,0.15);
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      opacity: 0.6;
+    }
+    
+    .story-list { 
+      padding: 0 20px 100px; 
+    }
+    
+    .story-card { 
+      display: flex; 
+      align-items: center;
+      gap: 16px; 
+      background: rgba(255,255,255,0.95); 
+      border-radius: 20px; 
+      padding: 16px; 
+      margin-bottom: 12px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      cursor: pointer; 
+      transition: all 0.3s;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .story-card:hover {
+      transform: translateX(4px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    
+    .story-card:active { 
+      transform: scale(0.98); 
+    }
+    
+    .story-emoji { 
+      font-size: 44px; 
+      min-width: 56px;
+      height: 56px;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+      border-radius: 16px;
+    }
+    
+    .story-info { 
+      flex: 1; 
+    }
+    
+    .story-title { 
+      font-size: 16px; 
+      font-weight: 600; 
+      color: #1a1a2e; 
+      margin-bottom: 4px; 
+    }
+    
+    .story-desc { 
+      font-size: 13px; 
+      color: #636e72; 
+      line-height: 1.5; 
+      margin-bottom: 8px; 
+      display: -webkit-box; 
+      -webkit-line-clamp: 2; 
+      -webkit-box-orient: vertical; 
+      overflow: hidden; 
+    }
+    
+    .story-tags { 
+      display: flex; 
+      gap: 6px; 
+      flex-wrap: wrap; 
+    }
+    
+    .story-tag { 
+      font-size: 11px; 
+      padding: 4px 10px; 
+      border-radius: 12px; 
+      background: rgba(102,126,234,0.1);
+      color: #667eea;
+      font-weight: 500;
+    }
+    
+    .story-tag.age {
+      background: rgba(255,107,107,0.1);
+      color: #FF6B6B;
+    }
+    
+    .story-arrow {
+      font-size: 20px;
+      color: #b2bec3;
+      transition: all 0.3s;
+    }
+    
+    .story-card:hover .story-arrow {
+      color: #FF6B6B;
+      transform: translateX(4px);
+    }
+    
+    .empty-state { 
+      text-align: center; 
+      padding: 80px 20px; 
+      color: rgba(255,255,255,0.6); 
+    }
+    
+    .empty-emoji { 
+      font-size: 64px; 
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+    
+    .empty-state p {
+      font-size: 15px;
+    }
+    
+    .stats-summary {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      padding: 0 20px 16px;
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+    }
+    
+    .stats-summary span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="page-header"><h1>📚 故事库</h1></div>
+    <div class="page-header">
+      <h1>📚 故事库</h1>
+      <p>经典童话、寓言、成语故事</p>
+    </div>
+    
+    <div class="stats-summary" id="statsSummary"></div>
 
     <div class="filter-bar">
       <div class="category-tabs">
-        <button class="tab-btn active" data-cat="all">全部</button>
-        <button class="tab-btn" data-cat="grimm">📚 格林童话</button>
-        <button class="tab-btn" data-cat="andersen">🦢 安徒生童话</button>
+        <button class="tab-btn active" data-cat="all">✨ 全部</button>
+        <button class="tab-btn" data-cat="grimm">🏰 格林童话</button>
+        <button class="tab-btn" data-cat="andersen">🦢 安徒生</button>
         <button class="tab-btn" data-cat="aesop">📖 伊索寓言</button>
         <button class="tab-btn" data-cat="classic">⭐ 经典故事</button>
+        <button class="tab-btn" data-cat="bedtime">🌙 睡前故事</button>
+        <button class="tab-btn" data-cat="fable">🦊 寓言</button>
+        <button class="tab-btn" data-cat="idiom">📚 成语</button>
       </div>
-      <div class="age-filter">
-        <button class="age-btn active" data-age="all">全部</button>
-        <button class="age-btn" data-age="2-4">2-4岁</button>
-        <button class="age-btn" data-age="4-6">4-6岁</button>
-        <button class="age-btn" data-age="6-8">6-8岁</button>
+      <div class="search-box-wrapper">
+        <span class="search-icon">🔍</span>
+        <input class="search-box" type="text" placeholder="搜索故事..." id="searchInput">
       </div>
-      <input class="search-box" type="text" placeholder="🔍 搜索故事..." id="searchInput">
     </div>
 
     <div class="story-list" id="storyList"></div>
     <div class="empty-state" id="emptyState" style="display:none">
       <div class="empty-emoji">🔍</div>
-      <p>没有找到故事</p>
+      <p>没有找到相关故事</p>
     </div>
   </div>
 
@@ -69,13 +273,11 @@
   <script>
     let allStories = StoryData.stories;
     let currentCat = 'all';
-    let currentAge = 'all';
     let searchText = '';
 
     function renderStories() {
       let filtered = allStories;
       if (currentCat !== 'all') filtered = filtered.filter(s => s.category === currentCat);
-      if (currentAge !== 'all') filtered = filtered.filter(s => s.ageRange === currentAge);
       if (searchText) filtered = filtered.filter(s => s.title.includes(searchText) || (s.content && s.content.includes(searchText)));
 
       const list = document.getElementById('storyList');
@@ -93,14 +295,21 @@
           <div class="story-emoji">${s.emoji || '📖'}</div>
           <div class="story-info">
             <div class="story-title">${s.title}</div>
-            <div class="story-desc">${(s.content || '').substring(0, 50)}...</div>
+            <div class="story-desc">${(s.content || '').substring(0, 60)}...</div>
             <div class="story-tags">
-              <span class="story-tag">${s.ageRange}岁</span>
+              <span class="story-tag age">${s.ageRange}岁</span>
               ${(s.tags || []).slice(0, 2).map(t => `<span class="story-tag">${t}</span>`).join('')}
             </div>
           </div>
+          <span class="story-arrow">›</span>
         </div>
       `).join('');
+      
+      // 更新统计
+      document.getElementById('statsSummary').innerHTML = `
+        <span>📖 共 ${filtered.length} 个故事</span>
+        <span>🎯 ${currentCat === 'all' ? '全部分类' : document.querySelector('.tab-btn.active').textContent}</span>
+      `;
     }
 
     function openStory(id, source) {
@@ -116,16 +325,6 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
         currentCat = this.dataset.cat;
-        renderStories();
-      });
-    });
-
-    // 年龄切换
-    document.querySelectorAll('.age-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.age-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        currentAge = this.dataset.age;
         renderStories();
       });
     });
