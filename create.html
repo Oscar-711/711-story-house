@@ -6,57 +6,325 @@
   <title>AI创作 - 711故事屋</title>
   <link rel="stylesheet" href="css/common.css">
   <style>
-    .section { margin-bottom: 20px; }
-    .section-label { font-size: 15px; font-weight: 600; color: var(--text-light); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .page-header {
+      text-align: center;
+      padding: 24px 0 16px;
+      color: #fff;
+    }
+    
+    .page-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .page-header p {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+
+    .section { 
+      margin-bottom: 24px; 
+      padding: 0 20px;
+    }
+    
+    .section-label { 
+      font-size: 15px; 
+      font-weight: 600; 
+      color: rgba(255,255,255,0.9); 
+      margin-bottom: 12px; 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+    }
 
     /* 孩子选择 */
-    .child-list { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
-    .child-chip { display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 16px; background: var(--card-bg); box-shadow: var(--card-shadow); cursor: pointer; white-space: nowrap; border: 2px solid transparent; transition: border-color .2s; flex-shrink: 0; }
-    .child-chip.selected { border-color: var(--accent); }
-    .child-chip .avatar { font-size: 24px; }
-    .child-chip .cname { font-size: 14px; font-weight: 500; }
-    .no-child-card { background: var(--card-bg); border-radius: var(--radius); padding: 24px; text-align: center; color: var(--text-secondary); }
-    .no-child-card a { color: var(--accent); text-decoration: underline; }
+    .child-list { 
+      display: flex; 
+      gap: 10px; 
+      overflow-x: auto; 
+      padding: 4px 0 8px;
+      scrollbar-width: none;
+    }
+    
+    .child-list::-webkit-scrollbar { display: none; }
+    
+    .child-chip { 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+      padding: 12px 18px; 
+      border-radius: 20px; 
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      cursor: pointer; 
+      white-space: nowrap; 
+      border: 2px solid transparent; 
+      transition: all 0.3s;
+      flex-shrink: 0;
+      color: rgba(255,255,255,0.9);
+    }
+    
+    .child-chip.selected { 
+      border-color: #FF6B6B;
+      background: rgba(255,107,107,0.2);
+    }
+    
+    .child-chip .avatar { 
+      font-size: 24px; 
+    }
+    
+    .child-chip .cname { 
+      font-size: 14px; 
+      font-weight: 600;
+    }
+    
+    .no-child-card { 
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px; 
+      padding: 32px; 
+      text-align: center; 
+      color: #636e72;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .no-child-card a { 
+      color: #FF6B6B;
+      text-decoration: none;
+      font-weight: 600;
+    }
 
     /* 故事类型网格 */
-    .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .type-item { background: var(--card-bg); border-radius: 14px; padding: 14px 8px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all .2s; box-shadow: var(--card-shadow); }
-    .type-item.selected { border-color: var(--accent); background: rgba(102,126,234,0.12); }
-    .type-item .temoji { font-size: 26px; display: block; margin-bottom: 4px; }
-    .type-item .tname { font-size: 13px; color: var(--text-primary); }
+    .type-grid { 
+      display: grid; 
+      grid-template-columns: repeat(4, 1fr); 
+      gap: 10px; 
+    }
+    
+    .type-item { 
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 16px; 
+      padding: 16px 8px; 
+      text-align: center; 
+      cursor: pointer; 
+      border: 2px solid transparent; 
+      transition: all 0.3s;
+      color: rgba(255,255,255,0.9);
+    }
+    
+    .type-item.selected { 
+      border-color: #FF6B6B;
+      background: rgba(255,107,107,0.2);
+      box-shadow: 0 4px 15px rgba(255,107,107,0.2);
+    }
+    
+    .type-item .temoji { 
+      font-size: 28px; 
+      display: block; 
+      margin-bottom: 6px; 
+    }
+    
+    .type-item .tname { 
+      font-size: 12px;
+      font-weight: 500;
+    }
 
     /* 自定义输入 */
-    .custom-input { display: none; margin-top: 10px; }
-    .custom-input.show { display: block; }
-    .custom-input textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px; font-size: 14px; resize: none; height: 70px; background: var(--card-bg); color: var(--text-primary); }
+    .custom-input { 
+      display: none; 
+      margin-top: 12px; 
+    }
+    
+    .custom-input.show { 
+      display: block; 
+    }
+    
+    .custom-input textarea { 
+      width: 100%; 
+      padding: 16px; 
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 16px; 
+      font-size: 15px; 
+      resize: none; 
+      height: 80px; 
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      box-sizing: border-box;
+    }
+    
+    .custom-input textarea::placeholder {
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .custom-input textarea:focus {
+      outline: none;
+      border-color: #FF6B6B;
+    }
 
     /* 篇幅选择 */
-    .length-row { display: flex; gap: 8px; }
-    .length-item { flex: 1; padding: 10px 4px; border-radius: 12px; background: var(--card-bg); text-align: center; cursor: pointer; border: 2px solid transparent; transition: all .2s; box-shadow: var(--card-shadow); }
-    .length-item.selected { border-color: var(--accent); background: rgba(102,126,234,0.12); }
-    .length-item .lname { font-size: 13px; font-weight: 500; }
-    .length-item .ldesc { font-size: 11px; color: var(--text-secondary); }
+    .length-row { 
+      display: flex; 
+      gap: 10px; 
+    }
+    
+    .length-item { 
+      flex: 1; 
+      padding: 14px 8px; 
+      border-radius: 16px; 
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      text-align: center; 
+      cursor: pointer; 
+      border: 2px solid transparent; 
+      transition: all 0.3s;
+      color: rgba(255,255,255,0.9);
+    }
+    
+    .length-item.selected { 
+      border-color: #FF6B6B;
+      background: rgba(255,107,107,0.2);
+    }
+    
+    .length-item .lname { 
+      font-size: 14px; 
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .length-item .ldesc { 
+      font-size: 11px; 
+      opacity: 0.8;
+    }
 
     /* 按钮区 */
-    .btn-row { display: flex; gap: 10px; margin-top: 20px; }
-    .gen-btn { flex: 1; padding: 14px; border: none; border-radius: 16px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
-    .gen-btn-text { background: #f0f0f0; color: #333; }
-    .gen-btn-pic { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
-    .gen-btn:disabled { opacity: .5; cursor: default; }
-    .coming-tag { font-size: 10px; background: rgba(255,255,255,.3); padding: 2px 6px; border-radius: 8px; margin-left: 4px; }
+    .btn-row { 
+      display: flex; 
+      gap: 12px; 
+      margin-top: 32px;
+      padding: 0 20px;
+    }
+    
+    .gen-btn { 
+      flex: 1; 
+      padding: 16px; 
+      border: none; 
+      border-radius: 16px; 
+      font-size: 16px; 
+      font-weight: 600; 
+      cursor: pointer; 
+      transition: all 0.3s;
+    }
+    
+    .gen-btn-text { 
+      background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+    }
+    
+    .gen-btn-text:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255,107,107,0.4);
+    }
+    
+    .gen-btn-pic { 
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      color: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .gen-btn:disabled { 
+      opacity: .5; 
+      cursor: default; 
+    }
+    
+    .coming-tag { 
+      font-size: 10px; 
+      background: rgba(255,255,255,.2); 
+      padding: 2px 8px; 
+      border-radius: 10px; 
+      margin-left: 4px; 
+    }
+
+    /* 功能预告卡片 */
+    .feature-preview {
+      margin: 20px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2));
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+    }
+    
+    .feature-preview h3 {
+      color: #fff;
+      font-size: 15px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .feature-preview p {
+      color: rgba(255,255,255,0.8);
+      font-size: 13px;
+      line-height: 1.6;
+    }
 
     /* 加载遮罩 */
-    .loading-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 300; justify-content: center; align-items: center; }
-    .loading-mask.show { display: flex; }
-    .loading-box { background: #fff; border-radius: 20px; padding: 40px 32px; text-align: center; max-width: 280px; }
-    .loading-box .spinner { font-size: 48px; animation: spin 2s linear infinite; display: inline-block; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
-    .loading-box .ltxt { margin-top: 16px; font-size: 15px; color: #333; line-height: 1.6; }
+    .loading-mask { 
+      display: none; 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0,0,0,.7); 
+      z-index: 300; 
+      justify-content: center; 
+      align-items: center;
+      backdrop-filter: blur(5px);
+    }
+    
+    .loading-mask.show { 
+      display: flex; 
+    }
+    
+    .loading-box { 
+      background: rgba(255,255,255,0.95);
+      border-radius: 24px; 
+      padding: 48px 40px; 
+      text-align: center; 
+      max-width: 300px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    .loading-box .spinner { 
+      font-size: 56px; 
+      animation: spin 2s linear infinite; 
+      display: inline-block; 
+    }
+    
+    @keyframes spin { 
+      100% { transform: rotate(360deg); } 
+    }
+    
+    .loading-box .ltxt { 
+      margin-top: 20px; 
+      font-size: 16px; 
+      color: #1a1a2e;
+      font-weight: 500;
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header"><h1>✨ AI创作</h1></div>
+    <div class="page-header">
+      <h1>✨ AI创作</h1>
+      <p>为宝贝创作专属睡前故事</p>
+    </div>
 
     <!-- 选择孩子 -->
     <div class="section">
@@ -75,7 +343,7 @@
 
     <!-- 篇幅 -->
     <div class="section">
-      <div class="section-label">📏 篇幅</div>
+      <div class="section-label">📏 故事篇幅</div>
       <div class="length-row" id="lengthRow"></div>
     </div>
 
@@ -84,11 +352,11 @@
       <button class="gen-btn gen-btn-text" id="genTextBtn" onclick="doGenerate()">📝 生成故事</button>
       <button class="gen-btn gen-btn-pic" disabled>🎨 AI绘本<span class="coming-tag">即将上线</span></button>
     </div>
-    <div style="margin-top:12px;padding:12px;background:#f8f9ff;border-radius:12px;font-size:13px;color:#666;line-height:1.6">
-      <b>🎨 AI绘本功能预告</b><br>
-      以宝贝名字和形象为主角，生成精美绘本故事！<br>
-      支持自定义类型、情节、场景等关键要素<br>
-      每个故事配有多张精美插画，像真正的绘本一样
+    
+    <!-- 功能预告 -->
+    <div class="feature-preview">
+      <h3>🎨 AI绘本功能预告</h3>
+      <p>以宝贝名字和形象为主角，生成精美绘本故事！支持自定义类型、情节、场景等关键要素，每个故事配有多张精美插画。</p>
     </div>
   </div>
 
@@ -103,29 +371,31 @@
   <nav class="nav-bar">
     <a href="index.html"><span class="icon">🏠</span>首页</a>
     <a href="library.html"><span class="icon">📚</span>故事库</a>
-    <a href="create.html"><span class="icon">✨</span>AI创作</a>
+    <a href="create.html" class="active"><span class="icon">✨</span>AI创作</a>
     <a href="profile.html"><span class="icon">👤</span>我的</a>
   </nav>
 
-  <script src="js/utils.js?v=3"></script>
-  <script src="js/storage.js?v=3"></script>
+  <script src="js/utils.js?v=4"></script>
+  <script src="js/storage.js?v=4"></script>
   <script>
 // === INLINED story-ai.js v4.0 (bypass CDN cache) ===
 const API_CONFIG = {
   storyUrl: 'https://api.stepfun.com/v1/chat/completions',
-  ttsUrl: null,
   apiKey: '4oS7T7XAKtsj9jA21J0ThpPqbU6UXmVmFeLdEOLLNGpaiGrcHi9Mym5aRNtWnHiix'
 };
+
 const StoryAI = {
   API_URL: API_CONFIG.storyUrl,
   API_KEY: API_CONFIG.apiKey,
   MODEL: 'step-3.5-flash',
+  
   lengthConfig: {
     short:  { wordCount: 300,  pageCount: 2, desc: '短篇' },
     medium: { wordCount: 600,  pageCount: 4, desc: '中篇' },
     long:   { wordCount: 1000, pageCount: 6, desc: '长篇' },
     extra:  { wordCount: 1500, pageCount: 8, desc: '超长篇' }
   },
+  
   typeDesc: {
     fairy: '童话故事', fable: '寓言故事', myth: '神话传说',
     animal: '动物故事', scifi: '科幻冒险', science: '科学探索',
@@ -133,18 +403,22 @@ const StoryAI = {
     habit: '好习惯养成', friendship: '友情故事', courage: '勇气故事',
     custom: '自定义'
   },
+  
   safetyGuidelines: '禁止恐怖、焦虑、不当示范、危险行为、复杂负面情绪内容。用温馨安全的方式替代。',
+  
   getCognitiveElements(age) {
     if (age <= 3) return '融入基础认知：数数(1-5)、基本颜色、简单形状。句子简短(10字以内)，多用叠词和拟声词';
     if (age <= 4) return '融入基础认知：数数(1-10)、颜色、形状、常见动物。句子简短，适当重复';
     if (age <= 6) return '融入社交认知：情感词汇(开心/难过/骄傲)、社交概念(分享/轮流/说请和谢谢)';
     return '融入成长认知：简单逻辑推理、因果关系、友谊与合作的深层意义';
   },
+  
   getLanguageStyle(age) {
     if (age <= 3) return '语言风格：句子极短(5-10字)，节奏重复，多用叠词和拟声词';
     if (age <= 4) return '语言风格：句子简短(10-15字)，节奏舒缓，多用拟声词';
     return '语言风格：优美生动，适当使用形容词，情节完整有起伏';
   },
+  
   async generateStory(opts) {
     try { return await this._doGenerate(opts); }
     catch(e) {
@@ -152,6 +426,7 @@ const StoryAI = {
       throw e;
     }
   },
+  
   _getMockStory(childName, childAge, childGender, storyType) {
     return {
       title: childName + '的奇妙冒险',
@@ -164,15 +439,19 @@ const StoryAI = {
       wish: childName + '能永远保持善良和勇敢的心'
     };
   },
+  
   async _doGenerate({ childName, childAge, childGender, storyType, customPrompt, length }) {
     const cfg = this.lengthConfig[length] || this.lengthConfig.medium;
     const genderDesc = childGender === 'girl' ? '女孩' : '男孩';
     const pronoun = childGender === 'girl' ? '她' : '他';
     let typeDesc = this.typeDesc[storyType] || '童话故事';
     if (storyType === 'custom' && customPrompt) typeDesc = '关于"' + customPrompt + '"的定制故事';
+    
     const scenes = ['魔法森林', '彩虹山谷', '星星湖畔', '云朵城堡', '糖果小镇', '水晶海底'];
     const scene = scenes[Math.floor(Math.random() * scenes.length)];
+    
     const prompt = '你是一位专业的儿童睡前故事作家。请为一个叫"' + childName + '"的' + childAge + '岁' + genderDesc + '创作一个睡前故事。主角：' + childName + '（' + genderDesc + '），场景：' + scene + '，类型：' + typeDesc + '，字数：约' + cfg.wordCount + '字，分成' + cfg.pageCount + '个自然段落。风格温馨优美，适当使用拟声词。' + this.getCognitiveElements(childAge) + ' ' + this.getLanguageStyle(childAge) + ' ' + this.safetyGuidelines + ' 请按以下JSON格式输出（只输出JSON）：{"title":"故事标题（包含' + childName + '）","pages":[{"text":"段落内容","scene":"场景画面描述"}],"tip":"给' + childName + '的成长小贴士","moral":"核心道理（一句话）","wish":"对' + childName + '的温馨祝愿"}';
+    
     const res = await fetch(this.API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.API_KEY },
@@ -187,7 +466,9 @@ const StoryAI = {
         ]
       })
     });
+    
     if (!res.ok) { const err = await res.text(); throw new Error('API请求失败: ' + res.status); }
+    
     const data = await res.json();
     const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || '';
     return JSON.parse(content);
@@ -195,7 +476,7 @@ const StoryAI = {
 };
 // === END INLINED ===
   </script>
-  <script src="js/app.js?v=3"></script>
+  <script src="js/app.js?v=4"></script>
   <script>
     // State
     let selectedChildId = null;
@@ -253,16 +534,18 @@ const StoryAI = {
       // Lengths
       document.getElementById('lengthRow').innerHTML = lengths.map(l =>
         `<div class="length-item ${l.key === selectedLength ? 'selected' : ''}" onclick="selectLength('${l.key}')">
-          <div class="lname">${l.name}</div>
-          <div class="ldesc">${l.desc}</div>
+          <span class="lname">${l.name}</span>
+          <span class="ldesc">${l.desc}</span>
         </div>`
       ).join('');
     }
 
     function selectChild(id) {
       selectedChildId = id;
-      document.querySelectorAll('.child-chip').forEach(el => el.classList.toggle('selected', el.onclick.toString().includes(id)));
-      initPage(); // re-render
+      document.querySelectorAll('.child-chip').forEach(el => {
+        const isSelected = el.getAttribute('onclick').includes(id);
+        el.classList.toggle('selected', isSelected);
+      });
     }
 
     function selectType(key) {
