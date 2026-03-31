@@ -168,7 +168,11 @@ ${this.safetyGuidelines}
         model: this.MODEL,
         max_tokens: 4096,
         temperature: 0.8,
-        messages: [{ role: 'user', content: prompt }]
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: '你是一个儿童故事创作助手。请始终用中文回复，输出合法的JSON格式。' },
+          { role: 'user', content: prompt }
+        ]
       })
     });
 
