@@ -94,7 +94,38 @@
 
   <script src="js/utils.js"></script>
   <script src="js/storage.js"></script>
-  <script src="js/personalize.js"></script>
+  <script>
+    // === INLINED personalize.js (fixed grammar) ===
+    const Personalize = {
+      categoryNames: {
+        bedtime: '睡前', fairy: '童话', fable: '寓言', idiom: '成语',
+        aesop: '寓言', grimm: '童话'
+      },
+      generateOpening(child, story) {
+        if (!child) return '';
+        const vars = this._buildVars(child, story);
+        const categorySuffix = ['睡前', '童话', '寓言', '成语'].includes(vars.category) ? '' : '故事';
+        return `亲爱的${vars.name}小朋友，今天${vars.timeGreeting}，要给你讲的是一个关于${vars.topic}的${vars.category}${categorySuffix}，故事的名字叫《${vars.title}》。准备好了吗？让我们一起来听吧！`;
+      },
+      generateEnding(child, story) {
+        if (!child) return '';
+        const vars = this._buildVars(child, story);
+        return `故事讲完啦！这个故事告诉我们${vars.moral}。希望${vars.name}小朋友也能像故事里那样${vars.wish}。好啦，闭上小眼睛，做个甜甜的美梦吧。${vars.name}，晚安！🌙`;
+      },
+      _buildVars(child, story) {
+        return {
+          name: child.name || '小朋友',
+          pronoun: child.gender === 'female' ? '她' : '他',
+          timeGreeting: getTimeGreeting(),
+          category: this.categoryNames[story.category] || story.category || '故事',
+          topic: story.topic || '有趣',
+          title: story.title || '',
+          moral: story.moral || '要做一个好孩子',
+          wish: story.wish || '健康快乐地成长'
+        };
+      }
+    };
+  </script>
   <script src="js/story-data.js"></script>
   <script>
     let story = null;
